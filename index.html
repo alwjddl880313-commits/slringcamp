@@ -1,0 +1,1255 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#121212">
+<meta name="description" content="하루 한 경기, 운동으로 승패를 기록하고 선수 스티커를 모으는 나만의 운동 기록 앱">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="favicon-96.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="스프링캠프">
+<style>
+:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0;-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}
+img{max-width:100%}
+[hidden]{display:none!important}
+</style>
+<title>나만의 스프링캠프</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;500;700&family=Roboto+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: scoreboard band on top, single column of cards, fixed bottom tab bar (phone-first). */
+:root{
+  --bg:#f2f3f7; --surface:#ffffff; --sunk:#eceef4; --ink:#13203a; --muted:#646e86; --line:#dde1ea;
+  --red:#c8102e; --red-ink:#ffffff; --red-soft:#fbe7ea; --gold:#e3a91f; --silver:#a9b1c0; --bronze:#c07b4a;
+  --loss:#7d869a; --loss-soft:#e9ebf0; --rain:#2c6db0; --rain-soft:#e4eef9;
+  --board:#10233f; --board-2:#1c3a63; --board-ink:#ffffff; --board-muted:#b9c7dc; --board-line:#ffffff24;
+  --display:'Black Han Sans','Noto Sans KR',system-ui,sans-serif;
+  --body:'Noto Sans KR',system-ui,-apple-system,'Apple SD Gothic Neo',sans-serif;
+  --mono:'Roboto Mono',ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0c111c; --surface:#151c2b; --sunk:#1c2537; --ink:#e8ecf4; --muted:#97a1b6; --line:#273149;
+  --red:#ec3a52; --red-ink:#ffffff; --red-soft:#3a1820; --gold:#f0bf45; --silver:#8f99ab; --bronze:#cf8b5a;
+  --loss:#79839a; --loss-soft:#232c3f; --rain:#5e9fe6; --rain-soft:#18283f;
+  --board:#0a1628; --board-2:#13294a; --board-ink:#ffffff; --board-muted:#9fb0ca; --board-line:#ffffff24; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0c111c; --surface:#151c2b; --sunk:#1c2537; --ink:#e8ecf4; --muted:#97a1b6; --line:#273149;
+  --red:#ec3a52; --red-ink:#ffffff; --red-soft:#3a1820; --gold:#f0bf45; --silver:#8f99ab; --bronze:#cf8b5a;
+  --loss:#79839a; --loss-soft:#232c3f; --rain:#5e9fe6; --rain-soft:#18283f;
+  --board:#0a1628; --board-2:#13294a; --board-ink:#ffffff; --board-muted:#9fb0ca; --board-line:#ffffff24; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+.wrap{max-width:640px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+#view{padding-bottom:96px}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+/* scoreboard */
+.board{background:linear-gradient(165deg,var(--board) 55%,var(--board-2));color:var(--board-ink);border-top:4px solid var(--red)}
+.board .wrap{padding-block:18px 20px;display:grid;gap:14px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:14px;color:var(--board-muted)}
+.brand .edit{margin-left:auto;color:var(--board-muted);text-decoration:none;font-size:12px;border:1px solid var(--board-line);border-radius:999px;padding:4px 10px}
+.ball{width:22px;height:22px;flex:none}
+.slogan{font-family:var(--display);font-size:32px;line-height:1.12;letter-spacing:.5px;text-wrap:balance;overflow-wrap:anywhere}
+.slogan em{font-style:normal;color:var(--red)}
+.slogan-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.slogan-row .slogan{min-width:0;flex:1}
+.dday{flex:none;display:grid;justify-items:center;gap:1px;background:var(--red);color:var(--red-ink);border-radius:10px;padding:6px 10px 7px;line-height:1.1}
+.dday small{font-size:10px;font-weight:700;letter-spacing:.06em;opacity:.85}
+.dday b{font-family:var(--mono);font-weight:700;font-size:18px;font-variant-numeric:tabular-nums;letter-spacing:.02em}
+.dday.light b{font-size:15px}
+.dday.empty{background:transparent;border:1px dashed var(--board-muted);color:var(--board-muted);text-decoration:none}
+.cs i{font-style:normal;font-size:9px;font-weight:700;margin-left:1px}
+.pricerow{display:grid;grid-template-columns:56px 96px minmax(0,1fr);gap:10px;align-items:center}
+.pricein{display:flex;align-items:center;gap:6px}.pricein input{text-align:center}
+.score{display:grid;grid-template-columns:1.1fr 1fr 1fr;border:1px solid var(--board-line);border-radius:12px;overflow:hidden}
+.score>div{padding:10px 12px;display:grid;gap:2px;min-width:0}
+.score>div+div{border-left:1px solid var(--board-line)}
+.score .lbl{font-size:11px;letter-spacing:.08em;color:var(--board-muted)}
+.score b{font-family:var(--display);font-weight:400;font-size:20px;white-space:nowrap}
+.score b.mono{font-family:var(--mono);font-weight:700;color:var(--board-ink)}
+.score .pctbar{height:3px;width:28px;background:var(--red);border-radius:2px}
+.score small{font-size:11px;color:var(--board-muted)}
+
+/* generic */
+.page{display:grid;gap:14px;padding-top:16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;min-width:0}
+.card h2{font-size:16px;margin:0}
+.head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.muted{color:var(--muted);font-size:13px}
+.title{font-family:var(--display);font-weight:400;font-size:24px;margin:0;text-wrap:balance}
+.back{display:inline-flex;align-items:center;gap:4px;color:var(--muted);text-decoration:none;font-size:14px}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:10px 14px;font-weight:700;color:var(--ink)}
+.btn.primary{background:var(--red);border-color:var(--red);color:var(--red-ink)}
+.btn.ghost{background:transparent}
+.btn.danger{color:var(--red);border-color:var(--red)}
+.btn.block{width:100%;padding:13px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.icon-btn{width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;font-size:18px;line-height:1}
+.icon-btn:disabled{opacity:.35;cursor:default}
+.notice{background:var(--sunk);border-radius:10px;padding:10px 12px;font-size:13px;color:var(--muted)}
+input[type=number],input[type=text],input[type=date],select,textarea{background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:9px 10px;width:100%;min-width:0}
+textarea{min-height:90px;font-family:var(--mono);font-size:12px}
+label.fld{display:grid;gap:4px;font-size:12px;color:var(--muted);min-width:0}
+
+/* result badges */
+.res{display:inline-grid;place-items:center;min-width:44px;padding:3px 10px;border-radius:8px;font-family:var(--display);font-size:18px}
+.res.W{background:var(--red);color:var(--red-ink)}
+.res.L{background:var(--loss-soft);color:var(--loss)}
+.res.R{background:var(--rain-soft);color:var(--rain)}
+.res.P{background:var(--sunk);color:var(--muted);font-family:var(--body);font-size:13px;font-weight:700}
+
+/* stickers */
+.stk{width:40px;height:40px;border-radius:50%;display:inline-grid;place-items:center;border:3px solid var(--gold);background:var(--sunk);overflow:hidden;flex:none;font-weight:700;font-size:12px;letter-spacing:-.02em}
+.stk img{width:100%;height:100%;object-fit:cover}
+.stk.silver{border-color:var(--silver)}.stk.bronze{border-color:var(--bronze)}
+.stk.minus{border-color:var(--loss);filter:grayscale(1);opacity:.75}
+.stk.sm{width:30px;height:30px;font-size:10px;border-width:2px}
+.stickers{display:flex;gap:6px;flex-wrap:wrap}
+
+/* calendar */
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}
+.wd{text-align:center;font-size:11px;color:var(--muted);padding-bottom:2px}
+.cell{border:1px solid var(--line);background:var(--surface);border-radius:9px;min-height:62px;padding:5px 4px;display:grid;align-content:start;justify-items:center;gap:3px;min-width:0}
+.cell:disabled{cursor:default;background:transparent;opacity:.55}
+.cell .n{font-size:12px;font-weight:700;font-variant-numeric:tabular-nums}
+.cell.today{border:2px solid var(--red)}
+.cell.off{background:transparent;border-style:dashed}
+.b{font-style:normal;font-family:var(--display);font-size:13px;line-height:1;padding:3px 5px;border-radius:5px}
+.b.W{background:var(--red);color:var(--red-ink)}
+.b.L{background:var(--loss-soft);color:var(--loss)}
+.b.L.auto{background:transparent;border:1px dashed var(--loss)}
+.b.R{background:var(--rain-soft);color:var(--rain);font-size:11px}
+.cell small{font-size:10px;color:var(--muted);font-variant-numeric:tabular-nums}
+.legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px;font-size:12px;color:var(--muted);align-items:center}
+.legend span{display:inline-flex;gap:5px;align-items:center}
+
+/* record */
+.datebar{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.datebar .d{font-family:var(--display);font-size:22px;text-align:center;flex:1}
+.preview{display:flex;align-items:center;gap:12px}
+.preview p{margin:0;font-size:14px}
+.exrow{display:grid;grid-template-columns:minmax(0,1fr) auto 40px;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.exrow:first-child{border-top:0}
+.exinfo{min-width:0}
+.exinfo b{display:block;font-size:15px}
+.exinfo small{color:var(--muted);font-size:12px}
+.exrow.ok .exinfo b::after{content:" ✓";color:var(--red)}
+.stepper{display:flex;align-items:center;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.stepper button{width:36px;height:38px;border:0;background:var(--sunk);font-size:18px}
+.stepper input{width:52px;border:0;border-radius:0;text-align:center;padding:8px 2px;font-family:var(--mono);-moz-appearance:textfield}
+.stepper input::-webkit-outer-spin-button,.stepper input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;font-size:13px}
+.chip.on{background:var(--rain);border-color:var(--rain);color:#fff}
+.switch{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.switch input{width:22px;height:22px;accent-color:var(--red)}
+
+/* week */
+.wkday{display:grid;grid-template-columns:72px 56px minmax(0,1fr);gap:10px;align-items:center;padding:9px 0;border-top:1px solid var(--line);background:none;border-left:0;border-right:0;border-bottom:0;width:100%;text-align:left}
+.wkday:first-child{border-top:0}
+.wkday:disabled{cursor:default;opacity:.55}
+table{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
+th,td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{font-weight:500;color:var(--muted);font-size:12px}
+.tablewrap{overflow-x:auto}
+
+/* settings */
+.menu{display:grid}
+.menu a{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:14px 2px;border-top:1px solid var(--line);color:var(--ink);text-decoration:none}
+.menu a:first-child{border-top:0}
+.menu a b{display:block;font-size:15px}
+.menu a span.muted{display:block}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.exedit{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:14px 0;border-top:1px solid var(--line)}
+.exedit:first-child{border-top:0;padding-top:0}
+.inn{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.inning{font-family:var(--display);font-size:20px;color:var(--red)}
+.inn-tag{display:block;font-size:11px;font-weight:700;color:var(--red);letter-spacing:.04em}
+.icon-btn.sm{width:32px;height:32px;font-size:16px}
+.minus-btn{color:var(--red)}
+.tierrow{display:grid;grid-template-columns:minmax(0,1fr) 72px auto 32px;gap:8px;align-items:center;padding:5px 0}
+.tierrow.fixed{padding:10px 0 0;border-top:1px dashed var(--line);margin-top:6px;grid-template-columns:minmax(0,1fr) 72px auto 32px}
+.tierrow.fixed>span:first-child{padding-left:10px;font-weight:700;color:var(--loss)}
+.grp{padding:14px 0;border-top:1px solid var(--line);display:grid;gap:6px}
+.grp:first-of-type{border-top:0;padding-top:0}
+.grphead{display:grid;grid-template-columns:minmax(0,1fr) 32px;gap:8px;align-items:center;margin-bottom:4px}
+.grphead input{font-weight:700}
+.plrow{display:grid;grid-template-columns:84px minmax(0,1fr);gap:8px;align-items:center}
+.plrow input{padding:7px 9px}
+.imgrow{display:flex;align-items:center;gap:12px;padding:8px 0;border-top:1px solid var(--line)}
+.imgrow:first-child{border-top:0}
+.imgrow .nm{flex:1;min-width:0}
+.imgrow input[type=file]{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.filebtn{border:1px solid var(--line);border-radius:9px;padding:7px 10px;font-size:13px;font-weight:700;cursor:pointer;background:var(--surface)}
+
+
+/* reward: stickers, dex, sheet */
+.ico{width:18px;height:18px;flex:none;vertical-align:-3px}
+.schip{display:inline-flex;align-items:center;gap:4px;color:var(--red);font-weight:700}
+.schip b{font-family:var(--display);font-weight:400;font-size:22px;color:var(--ink);font-variant-numeric:tabular-nums}
+.schip.s-ball{color:var(--rain)}
+.period{display:grid;grid-template-columns:52px minmax(0,1fr);gap:12px;align-items:center;background:linear-gradient(165deg,var(--board) 55%,var(--board-2));color:var(--board-ink);border-radius:14px;padding:14px 16px}
+.period .pico{width:52px;height:52px;border-radius:14px;background:var(--red);color:var(--red-ink);display:grid;place-items:center}
+.period .pico .ico{width:30px;height:30px}
+.period small{display:block;font-size:11px;color:var(--board-muted);letter-spacing:.06em}
+.period b{display:block;font-family:var(--display);font-weight:400;font-size:22px;line-height:1.2}
+.period span{display:block;font-size:12px;color:var(--board-muted)}
+.wallet{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.wallet .wl{display:flex;align-items:center;gap:8px;background:var(--sunk);border-radius:10px;padding:10px 12px}
+.wallet .wl-ico{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;background:var(--surface);color:var(--red);flex:none}
+.wallet .wl-ball .wl-ico{color:var(--rain)}
+.wallet .wl b{display:block;font-family:var(--display);font-weight:400;font-size:24px;line-height:1;font-variant-numeric:tabular-nums}
+.wallet .wl small{font-size:12px;color:var(--muted)}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:var(--sunk);border-radius:12px;padding:4px;gap:4px}
+.seg>*{border:0;background:transparent;color:var(--muted);border-radius:9px;padding:9px 6px;font-weight:700;text-align:center;text-decoration:none;font-size:14px}
+.seg>[aria-selected=true]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px #0002}
+.seg.small>*{padding:7px 6px;font-size:13px}
+.progress{height:6px;border-radius:99px;background:var(--sunk);overflow:hidden;margin-bottom:6px}
+.progress i{display:block;height:100%;background:var(--red)}
+.grp-h{display:flex;justify-content:space-between;align-items:center;margin:16px 0 8px;font-size:14px}
+.grp-h .price{display:inline-flex;align-items:center;gap:3px;color:var(--muted);font-size:13px;font-weight:700}
+.pgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.pcard{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:12px;padding:10px 6px 8px;display:grid;justify-items:center;gap:3px;min-width:0;text-align:center}
+.pcard b{font-size:13px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pcard small{font-size:11px;color:var(--muted)}
+.pcard .pimg{filter:grayscale(1);opacity:.55}
+.pcard.own{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold)}
+.pcard.own .pimg{filter:none;opacity:1;border-color:var(--gold)}
+.pstate{display:inline-flex;align-items:center;gap:2px;font-size:11px;font-weight:700;color:var(--red)}
+.pcard.own .pstate{color:var(--muted)}
+.pimg{width:56px;height:56px;border-radius:50%;border:2px solid var(--line);background:var(--sunk);overflow:hidden;display:grid;place-items:center;flex:none}
+.pimg img{width:100%;height:100%;object-fit:cover}
+.pimg .pname{font-family:var(--display);font-size:13px;line-height:1.1;padding:2px;text-align:center;word-break:keep-all;overflow-wrap:anywhere}
+.pimg.sm{width:40px;height:40px}.pimg.sm .pname{font-size:10px}
+.pimg.big{width:110px;height:110px;border-width:3px}.pimg.big .pname{font-size:22px}
+#sheet{position:fixed;inset:0;z-index:40}
+.sheet-bg{position:absolute;inset:0;background:#000a}
+.sheet-in{position:absolute;left:0;right:0;bottom:0;background:var(--surface);color:var(--ink);border-radius:18px 18px 0 0;display:grid;gap:12px;max-width:640px;margin:0 auto;
+  padding:20px max(16px,env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.sheet-in p{margin:0}
+.sheet-card{display:grid;justify-items:center;gap:6px;text-align:center}
+.sheet-card h2{margin:0;font-family:var(--display);font-weight:400;font-size:28px}
+.sheet-card small{color:var(--muted)}
+.sheet-card .pimg{filter:grayscale(1)}
+.sheet-card.own .pimg{filter:none;border-color:var(--gold)}
+.got{font-family:var(--display);font-size:20px;color:var(--red)}
+.reveal .pimg{animation:pop .5s ease-out}
+@keyframes pop{0%{transform:scale(.4) rotate(-20deg);opacity:0}70%{transform:scale(1.12) rotate(4deg)}100%{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.reveal .pimg{animation:none}}
+.rrow{display:grid;grid-template-columns:40px minmax(0,1fr) 70px 38px 32px;gap:8px;align-items:center;padding:6px 0;border-top:1px solid var(--line)}
+.rrow:first-of-type{border-top:0}
+.rrow input[type=file]{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.rrow input[type=text]{padding:7px 8px}
+.rphoto{cursor:pointer}
+.rg{font-size:11px;color:var(--muted);text-align:center;font-weight:700}
+.linescore{display:grid;grid-template-columns:repeat(auto-fit,minmax(30px,1fr));gap:4px}
+.ls{display:grid;justify-items:center;border-radius:8px;background:var(--sunk);padding:4px 0;font-variant-numeric:tabular-nums}
+.ls small{font-size:10px;color:var(--muted)}
+.ls b{font-size:13px;white-space:nowrap}.ls.k b{font-size:10px;line-height:19.5px}
+.ls.ok b{color:var(--red)}.ls.k b{color:var(--loss)}
+.gotline{display:flex;align-items:center;gap:6px;margin:10px 0 0;font-size:13px;font-weight:700}
+.cs{font-style:normal;display:inline-flex;margin-left:2px;color:var(--red)}.cs.s-ball{color:var(--rain)}
+.cs .ico{width:11px;height:11px;vertical-align:-1px}
+.expct{font-size:12px;text-align:right;color:var(--muted)}.expct.ok{color:var(--red);font-weight:700}.expct.k{color:var(--loss)}
+.sline{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);margin-top:4px}
+.sline.on{color:var(--ink);font-weight:700}
+/* team: LED lineup board + field */
+.led{--led-bg:#0b0d0c;--led-fg:#ffd54a;--led-dim:#6b5a1e;--led-line:#1e2420;background:var(--led-bg);color:var(--led-fg);border-radius:14px;padding:14px 16px;border:4px solid #2a2f2c;box-shadow:inset 0 0 24px #000;font-family:var(--mono)}
+.led-head{display:flex;justify-content:space-between;gap:8px;font-size:11px;letter-spacing:.14em;color:#f2f2f2;padding-bottom:8px;border-bottom:1px dashed var(--led-dim);margin-bottom:6px;font-family:var(--body);font-weight:700}
+.led-row{display:grid;grid-template-columns:30px minmax(0,1fr) auto;gap:10px;align-items:center;padding:5px 0;border-bottom:1px solid var(--led-line)}
+.led-row:last-child{border-bottom:0}
+.led-n{font-weight:700;color:#f2f2f2;text-align:center}
+.led-name{font-family:var(--display);font-size:19px;letter-spacing:.06em;text-shadow:0 0 6px #ffb80066;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.led-name i{font-style:normal;color:var(--led-dim)}
+.led-pos{font-size:13px;color:#7fe08a;font-family:var(--body);font-weight:700}
+.led-row.sp{border-top:1px dashed var(--led-dim);margin-top:4px;padding-top:8px}
+.led-row.sp .led-n{color:#7fe08a;font-size:12px}
+.lurow .led-n{color:var(--ink)}
+.field-card{padding:8px;overflow-x:auto}
+.field-card svg{display:block;width:100%;min-width:320px;height:auto}
+.grass{fill:#3d8a47}.stripe{stroke:#4a9a54;stroke-width:26;opacity:.55}.fence{fill:none;stroke:#1f4d26;stroke-width:5}
+.dirt{fill:#b9825a}.infield{fill:#3d8a47}.base{fill:#fff}
+.tag{fill:#0b0d0ccc}.tag.empty{fill:#ffffff22;stroke:#ffffffaa;stroke-dasharray:3 3}
+.tagt{fill:#fff;font-size:11px;font-weight:700;text-anchor:middle;font-family:var(--body)}
+.dh{fill:#fff;font-size:12px;font-weight:700;font-family:var(--body)}
+.penbox{fill:#2f6f38;stroke:#1f4d26;stroke-width:4}
+.pent{fill:#fff;font-size:13px;font-weight:700;text-anchor:middle;font-family:var(--display)}
+.penball{fill:#fff;stroke:#c8102e;stroke-width:2}
+.penn{fill:#fff;font-size:12px;font-family:var(--body)}.penn.empty{fill:#ffffffaa}
+.lurow{display:grid;grid-template-columns:30px minmax(0,1.4fr) minmax(0,1fr);gap:8px;align-items:center}
+/* bulk roster input */
+.bulk{display:grid;gap:10px}
+.bulk textarea{min-height:110px}
+#bulkFile{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.bkprev{display:grid;gap:10px;border-top:1px solid var(--line);padding-top:12px}
+.bklist{display:grid;max-height:320px;overflow-y:auto;border:1px solid var(--line);border-radius:10px}
+.bkrow{display:grid;grid-template-columns:22px minmax(0,1fr) 64px 64px;gap:8px;align-items:center;padding:8px 10px;border-top:1px solid var(--line);cursor:pointer}
+.bkrow:first-child{border-top:0}
+.bkrow input{width:18px;height:18px;accent-color:var(--red)}
+.bkrow b{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bkrow .mono{text-align:right;font-size:13px}
+.bkprev .row .btn{white-space:nowrap;padding:10px 8px}
+.bkst{font-size:11px;color:var(--muted);text-align:right}.bkst.new{color:var(--red);font-weight:700}
+/* first-run tutorial */
+#tour{position:fixed;inset:0;z-index:50;overflow-y:auto;background:linear-gradient(170deg,var(--board) 50%,var(--board-2));color:var(--board-ink)}
+#tour .tin{min-height:100%;max-width:560px;margin:0 auto;display:grid;grid-template-rows:auto 1fr auto;gap:20px;
+  padding:calc(16px + env(safe-area-inset-top,0px)) max(20px,env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(20px,env(safe-area-inset-left,0px))}
+.tskip{justify-self:end;background:none;border:1px solid var(--board-line);color:var(--board-muted);border-radius:999px;padding:6px 14px;font-size:13px}
+.tbody{align-self:center;display:grid;gap:16px}
+.teyebrow{font-size:12px;font-weight:700;letter-spacing:.2em;color:var(--red)}
+.ttitle{margin:0;font-family:var(--display);font-weight:400;font-size:clamp(32px,9vw,44px);line-height:1.12;text-wrap:balance}
+.ttext{margin:0;font-size:16px;line-height:1.75;color:var(--board-ink);opacity:.88;white-space:normal}
+.tball{width:84px;height:84px;color:var(--red)}
+.tdemo{display:grid;gap:10px;background:var(--board-line);border-radius:14px;padding:14px}
+.tdemo .ls{background:#ffffff14}.tdemo .ls small{color:var(--board-muted)}.tdemo .ls b{color:var(--board-ink)}.tdemo .ls.ok b{color:var(--red)}
+.tdemo p{margin:0;display:flex;align-items:center;gap:10px;font-size:14px}
+.tfoot{display:grid;gap:14px}
+.tdots,.tourstep i{display:flex;gap:6px;justify-content:center}
+.tdots b,.tourstep i b{width:8px;height:8px;border-radius:50%;background:var(--board-line)}
+.tdots b.on{background:var(--red);width:22px;border-radius:4px}
+.tfoot .row{flex-wrap:nowrap}.tfoot .btn{flex:1;padding:14px}
+.tback{background:transparent;color:var(--board-ink);border-color:var(--board-line)}
+.tourstep{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:12px;font-weight:700;color:var(--red);letter-spacing:.04em}
+.tourstep i b{background:var(--line)}.tourstep i b.on{background:var(--red)}
+#tourbar{position:fixed;left:0;right:0;bottom:0;z-index:25;background:var(--surface);border-top:1px solid var(--line);
+  padding:10px max(16px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+#tourbar .in{max-width:640px;margin:0 auto;display:grid;grid-template-columns:auto auto 1fr;gap:8px}
+#tourbar .btn{padding:12px 12px;white-space:nowrap}
+body.touring .tabbar,body.touring .own-save{display:none!important}
+.rulebox{display:grid;gap:6px;background:var(--sunk);border-radius:10px;padding:12px 14px;font-size:14px;line-height:1.6}
+.rulebox p{margin:0}
+.neg{color:var(--red)}
+.gotline.neg,.sline.neg{color:var(--red)}
+.cs.neg{color:var(--loss)}.cs i{font-style:normal}
+.wknet{display:inline-flex;align-items:center;gap:2px;font-weight:700;color:var(--ink)}.wknet.neg{color:var(--red)}.wknet .ico{width:14px;height:14px}
+/* tab bar */
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--surface);border-top:1px solid var(--line);
+  padding:6px max(16px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.tabbar .in{max-width:640px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr)}
+.tabbar a{display:grid;justify-items:center;gap:2px;padding:6px 0;color:var(--muted);text-decoration:none;font-size:11px;font-weight:700}
+.tabbar a svg{width:22px;height:22px}
+.tabbar a.on{color:var(--red)}
+#toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translate(-50%,10px);background:var(--board);color:var(--board-ink);padding:10px 16px;border-radius:999px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:30;max-width:90vw;text-align:center}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+@media (prefers-reduced-motion:reduce){#toast{transition:none}}
+/* player intro */
+.profile{display:grid;grid-template-columns:72px minmax(0,1fr);gap:14px;align-items:center;text-decoration:none;color:inherit}
+.pphoto{width:72px;height:72px;border-radius:16px;overflow:hidden;border:2px solid var(--red);background:var(--board-line);display:grid;place-items:center;color:var(--board-muted)}
+.pphoto img{width:100%;height:100%;object-fit:cover}
+.pphoto svg{width:34px;height:34px}
+.pphoto svg.avatar{width:100%;height:100%}
+.pinfo{min-width:0;display:grid;gap:3px}
+.pnick{font-family:var(--display);font-size:20px;line-height:1.2;overflow-wrap:anywhere}
+.pnick small{font-family:var(--body);font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--red);display:block}
+.pmeta{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;color:var(--board-muted)}
+.pmeta b{color:var(--board-ink);font-weight:500;margin-left:4px}
+.petc{font-size:12px;color:var(--board-muted);white-space:pre-line;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.pempty{font-size:13px;color:var(--board-muted)}
+/* look settings */
+.preview-frame{border-radius:14px;overflow:hidden;border:1px solid var(--line)}
+.preview-frame .board .wrap{padding-left:16px;padding-right:16px}
+.swrow{display:grid;gap:8px;padding:12px 0;border-top:1px solid var(--line)}
+.swrow:first-of-type{border-top:0;padding-top:0}
+.swrow .lbl{display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:14px}
+.swatches{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.sw{width:34px;height:34px;border-radius:50%;border:2px solid var(--line);padding:0}
+.sw[aria-pressed=true]{outline:3px solid var(--red);outline-offset:2px}
+.swatches input[type=color]{width:42px;height:34px;padding:2px;border-radius:10px;border:1px solid var(--line);background:var(--surface)}
+.presets{display:flex;gap:8px;flex-wrap:wrap}
+.preset{display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px 6px 6px;font-size:13px;font-weight:700}
+.preset i{display:flex}.preset i b{width:16px;height:16px;border-radius:50%;margin-left:-4px;border:1px solid var(--line)}.preset i b:first-child{margin-left:0}
+.warn{font-size:12px;color:var(--red)}
+.customfont{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px;border-radius:12px;background:var(--sunk);flex-wrap:wrap}
+.customfont input[type=file]{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.fontopts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.fontopt{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:12px;padding:10px 12px;text-align:left;display:grid;gap:2px;min-width:0}
+.fontopt[aria-pressed=true]{border-color:var(--red);box-shadow:inset 0 0 0 1px var(--red)}
+.fontopt .sample{font-size:20px;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fontopt small{color:var(--muted);font-size:11px;font-family:system-ui,sans-serif}
+.photo-edit{display:flex;align-items:center;gap:12px}
+.photo-edit .pphoto{border-color:var(--red);background:var(--sunk);color:var(--muted)}
+.photo-edit input[type=file]{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+@media (max-width:380px){.slogan{font-size:26px}.score b{font-size:17px}.exrow{grid-template-columns:minmax(0,1fr) auto 38px}.pgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style>
+</head>
+<body>
+
+<main id="view"></main>
+<nav class="tabbar" aria-label="메뉴"><div class="in">
+  <a href="#home" data-tab="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3 21 12 12 21 3 12Z"/><circle cx="12" cy="12" r="2"/></svg>홈</a>
+  <a href="#record" data-tab="record"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13 7l4 4"/></svg>기록</a>
+  <a href="#week" data-tab="week"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 20V12M10 20V6M15 20v-9M20 20V9"/></svg>주간</a>
+  <a href="#dex" data-tab="dex"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="4" y="3" width="11" height="15" rx="2"/><path d="M9 21h9a2 2 0 0 0 2-2V8"/><circle cx="9.5" cy="9" r="2.2"/><path d="M6.5 15c.6-1.6 1.7-2.4 3-2.4s2.4.8 3 2.4"/></svg>선수단</a>
+  <a href="#more" data-tab="more"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>설정</a>
+</div></nav>
+<div id="tour" hidden role="dialog" aria-modal="true" aria-label="처음 안내"></div>
+<div id="tourbar" hidden></div>
+<div id="sheet" hidden></div>
+<div id="toast" role="status"></div>
+
+<script>
+/* ---------- dates (local time, no UTC shift) ---------- */
+const pad=n=>String(n).padStart(2,'0');
+const ymd=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const parse=s=>{const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)};
+const addDays=(s,n)=>{const d=parse(s);d.setDate(d.getDate()+n);return ymd(d)};
+const todayStr=()=>ymd(new Date());
+const weekStart=s=>{const d=parse(s);d.setDate(d.getDate()-(d.getDay()+6)%7);return ymd(d)};
+const WD=['일','월','화','수','목','금','토'];
+const fmtMD=s=>{const d=parse(s);return `${d.getMonth()+1}월 ${d.getDate()}일 (${WD[d.getDay()]})`};
+const fmtShort=s=>{const d=parse(s);return `${d.getMonth()+1}/${d.getDate()}`};
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const $=s=>document.querySelector(s);
+
+/* ---------- state ---------- */
+const KEY='springcamp.v2';
+const RAIN_REASONS=['생리','질병','부상','기타'];
+const UNIT_HINTS=['분','세트','회','개','km','시간','잔'];
+const uid=p=>p+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const inningLabel=i=>`${i+1}이닝`+(i>=9?' (연장)':'');
+const SQUAT={id:'squat',name:'스쿼트',unit:'세트',daily:3};
+/* 2026 season, KIA. OPS from yagoonara team records, WAR = yagoonara yWAR (checked 2026-11-06). '' = not found, user fills in */
+const KIA_BATTERS=[['김도영',1.060],['카스트로',.928],['나성범',.920],['한준수',.822],['박재현',.802],['김선빈',.732],['김호령',.712],['김태군',.711],['하주석',.651],['김규성',.590],['박정우',''],['박상준',''],['아데를린',''],['주효상',''],['박민','']];
+const KIA_PITCHERS=[['올러',5.28],['네일',5.20],['양현종',1.69],['시라카와',1.11],['전상현',1.09],['이태양',.80],['곽도규',.65],['조상우',.63],['성영탁',.55],['정해영',''],['이의리',''],['김범수',''],['김태형',''],['최지민',''],['황동하','']];
+const emptyLineup=()=>({order:[...Array(9)].map(()=>({id:null,pos:null})),sp:null});
+function defaults(){
+  return{
+  season:{start:todayStr()},
+  exercises:[
+    {id:'stretch',name:'스트레칭',unit:'분',daily:10},
+    {id:'run',name:'달리기',unit:'분',daily:30},
+    {id:'burpee',name:'슬로우버피',unit:'세트',daily:5},
+    {id:'knee',name:'무릎대고 운동',unit:'세트',daily:3},
+    {id:'mountain',name:'마운틴 클라이머',unit:'세트',daily:3},
+    {id:'kick',name:'버피킥',unit:'세트',daily:3},
+    {id:'plank',name:'플랭크',unit:'세트',daily:3},
+    {...SQUAT},
+    {id:'sleep',name:'수면 (23시 취침)',unit:'회',daily:1}],
+  rule:{satisfyPct:100,winNeed:6},
+  team:'KIA 타이거즈',
+  reward:{periodDays:14,firstType:'bat',missPenalty:true,groupSize:3,prices:[8,7,5,4,3],v3:true,v4:true},
+  batters:KIA_BATTERS.map(([name,stat],i)=>({id:'b'+(i+1),name,stat})),
+  pitchers:KIA_PITCHERS.map(([name,stat],i)=>({id:'p'+(i+1),name,stat})),
+  owned:{},photos:{},lineup:emptyLineup(),
+  home:{slogan:'최강기아 승리하리라',profile:{nick:'',from:'',age:'',etc:'',photo:''}},
+  theme:{bg:'#121212',fg:'#ffffff',accent:'#c8102e'},
+  nextSeason:'',
+  fonts:{display:'blackhan',body:'noto'},
+  customFont:null,
+  onboarded:false,
+  records:{}}}
+function migrate(x){
+  if(!x||typeof x!=='object')return defaults();
+  const d=defaults();
+  if(x.onboarded===undefined)x.onboarded=true;
+  if(!x.reward){
+    const imgs=x.images||{};x.photos={};
+    [...d.batters,...d.pitchers].forEach(p=>{if(imgs[p.name])x.photos[p.id]=imgs[p.name]});
+    delete x.tiers;delete x.groups;delete x.grades;delete x.players;delete x.images;
+    x.exercises=(x.exercises||d.exercises).map(({type,group,...e})=>e);
+    if(x.exercises.length===8&&x.exercises[7].id==='sleep'&&!x.exercises.some(e=>e.id==='squat'))x.exercises.splice(7,0,{...SQUAT});
+    const m={...d,...x};
+    Object.values(m.records||{}).forEach(r=>{r.ex=(r.ex||[]).map(({type,group,...e})=>e)});
+    m._backfill=true;
+    return m;
+  }
+  return{...d,...x};
+}
+let S;
+try{S=JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){S=null}
+S=migrate(S);
+if(!S.reward.prices){S.reward={...S.reward,bonusAt:100,prices:[8,7,5,4,3]};S._backfill=true}
+if(!S.reward.noOutRule){S.reward={...S.reward,noOutRule:true};S._backfill=true}
+if(!S.reward.v3){S.reward={...S.reward,missPenalty:true,v3:true};delete S.reward.threshold;delete S.reward.bonusAt;S._backfill=true}
+/* outs no longer cost stickers; only unrecorded days do */
+/* new default prices; keep any prices the user changed themselves */
+if(S.reward.prices&&S.reward.prices.join()==='7,4,3,2,1')S.reward={...S.reward,prices:[8,7,5,4,3]};
+if(!S.reward.v4){S.reward={...S.reward,missPenalty:true,v4:true};delete S.reward.outLimit;S._backfill=true}
+if(!S.lineup)S.lineup=emptyLineup();
+function persist(){try{localStorage.setItem(KEY,JSON.stringify(S));return true}catch(e){toast('저장하지 못했어요. 사진 수를 줄여 보세요.');return false}}
+let toastT;function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>e.classList.remove('show'),2000)}
+
+/* ---------- game logic ---------- */
+function currentEx(){return S.exercises.map(e=>({id:e.id,name:e.name,unit:e.unit,t:Math.max(0,Number(e.daily)||0)}))}
+function evalRecord(r){
+  const rule=r.rule||S.rule;
+  const items=r.ex.map(x=>{const a=Math.max(0,Number(r.vals[x.id])||0);const pct=x.t>0?Math.min(100,a/x.t*100):100;
+    const strike=x.t>0&&a===0;const ok=!strike&&pct>=rule.satisfyPct;
+    return{...x,a,pct,ok,strike}});
+  const okN=items.filter(i=>i.ok).length,strikes=items.filter(i=>i.strike).length;
+  const need=Math.min(rule.winNeed,items.length);
+  return{items,okN,strikes,need,win:okN>=need,total:items.length,rule};
+}
+function dayStatus(d){
+  const T=todayStr(),r=S.records[d];
+  if(d>T)return{s:'future'};
+  if(d<S.season.start)return{s:'off'};
+  if(!r)return d===T?{s:'pending'}:{s:'L',auto:true};
+  if(r.rainout)return{s:'R',r};
+  const ev=evalRecord(r);return{s:ev.win?'W':'L',ev,r};
+}
+function tally(from,to){let W=0,L=0,R=0;for(let d=from;d<=to;d=addDays(d,1)){const x=dayStatus(d);if(x.s==='W')W++;else if(x.s==='L')L++;else if(x.s==='R')R++}return{W,L,R,pct:W+L?W/(W+L):null}}
+const fmtPct=p=>p==null?'-.---':p>=1?'1.000':p.toFixed(3).slice(1);
+/* ---------- reward: bat/ball stickers, alternating periods, buying players ---------- */
+const BAT_SVG='<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 3.5c-1-1-2.6-.9-3.6.1L8.6 12l3.4 3.4 8.4-8.3c1-1 1.1-2.6.1-3.6z"/><path d="M8.6 12l-1.3 1.3M10.7 14.1l-1.3 1.3"/><path d="M7.3 13.3l3.4 3.4-2.9 2.9a1.2 1.2 0 0 1-1.7 0l-1.7-1.7a1.2 1.2 0 0 1 0-1.7z"/><circle cx="4" cy="20" r="1.2"/></svg>';
+const BALL_SVG='<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M7 5.5c2 2.2 2 10.8 0 13M17 5.5c-2 2.2-2 10.8 0 13"/></svg>';
+const TYPE={
+  bat:{label:'타자',stat:'OPS',list:'batters',sticker:'방망이',icon:BAT_SVG,fmt:v=>v==null||v===''?'—':Number(v).toFixed(3).replace(/^0(?=\.)/,'')},
+  ball:{label:'투수',stat:'WAR',list:'pitchers',sticker:'야구공',icon:BALL_SVG,fmt:v=>v==null||v===''?'—':Number(v).toFixed(2)}};
+const other=t=>t==='bat'?'ball':'bat';
+function periodOf(d){const R=S.reward,len=Math.max(1,R.periodDays|0),days=Math.max(0,Math.round((parse(d)-parse(S.season.start))/864e5)),idx=Math.floor(days/len),start=addDays(S.season.start,idx*len);
+  return{type:idx%2===0?R.firstType:other(R.firstType),idx,start,end:addDays(start,len-1)}}
+/* old records get stickers under the default rule once, after all code has loaded */
+function backfillStickers(){if(!S._backfill)return;delete S._backfill;Object.entries(S.records).forEach(([date,r])=>applySticker(r,date));persist()}
+function rateOf(ev){return ev.items.length?ev.items.reduce((a,i)=>a+i.pct,0)/ev.items.length:0}
+/* stickers: a win earns 1, all innings met earns 1 more; a day left unrecorded takes 1 away.
+   The period type and out limit are frozen on the record when it is saved. */
+const ruleNow=date=>({type:periodOf(date).type});
+const nOf=r=>r&&r.sticker?(r.stickerN||1):0;
+function stickerCalc(ev,rule,rainout){if(rainout)return{n:0,pen:0};const n=ev.win?(ev.okN===ev.total?2:1):0;return{n,pen:0}}
+function applySticker(r,date,rule){r.stickerRule=rule||ruleNow(date);const{n,pen}=stickerCalc(evalRecord(r),r.stickerRule,r.rainout);r.sticker=n?r.stickerRule.type:null;r.stickerN=n;r.penalty=pen}
+function missedDays(){if(!S.reward.missPenalty)return[];const out=[],T=todayStr();for(let d=S.season.start;d<T;d=addDays(d,1))if(!S.records[d])out.push(d);return out}
+/* net change of one day: {type, n} (n may be negative), or null */
+function dayNet(date){const r=S.records[date];
+  if(r){if(r.rainout||!r.stickerRule)return null;const n=nOf(r)-(r.penalty||0);return{type:r.stickerRule.type,n,gain:nOf(r),pen:r.penalty||0}}
+  if(S.reward.missPenalty&&date>=S.season.start&&date<todayStr())return{type:periodOf(date).type,n:-1,gain:0,pen:1,missed:true};return null}
+const signed=n=>n>0?`+${n}`:n<0?`−${-n}`:'0';
+const fmtCount=n=>n<0?`−${-n}`:String(n);
+function wallet(){const w={bat:0,ball:0};Object.values(S.records).forEach(r=>{if(r.sticker)w[r.sticker]+=nOf(r);if(r.penalty&&r.stickerRule&&!r.rainout)w[r.stickerRule.type]-=r.penalty});
+  missedDays().forEach(d=>w[periodOf(d).type]--);
+  Object.values(S.owned).forEach(o=>{w[o.type]-=o.cost});return w}
+function earned(){const w={bat:0,ball:0};Object.values(S.records).forEach(r=>{if(r.sticker)w[r.sticker]+=nOf(r)});return w}
+const priceOfR=(R,g)=>Math.max(1,(R.reward.prices||[8,7,5,4,3])[g-1]|0);
+const priceOf=g=>Math.max(1,(S.reward.prices||[8,7,5,4,3])[g-1]|0);
+function groupsOf(type){const n=Math.max(1,S.reward.groupSize|0),val=p=>p.stat===''||p.stat==null||isNaN(Number(p.stat))?-Infinity:Number(p.stat);
+  return[...S[TYPE[type].list]].sort((a,b)=>val(b)-val(a)).map((p,i)=>({...p,type,group:i<n*5?Math.floor(i/n)+1:null}))}
+const findPlayer=id=>groupsOf('bat').concat(groupsOf('ball')).find(p=>p.id===id);
+const initials=n=>!n?'?':n==='카스트로'?'카스':n.length<=2?n:n.slice(-2);
+function photoHtml(p,cls='pimg'){const src=S.photos[p.id];return `<span class="${cls}">${src?`<img src="${src}" alt="${esc(p.name)}">`:`<span class="pname">${esc(p.name)}</span>`}</span>`}
+const stickerChip=(t,n)=>`<span class="schip s-${t}">${TYPE[t].icon}${n!=null?`<b>${n}</b>`:''}</span>`;
+const badge=s=>s.s==='W'?'<span class="res W">승</span>':s.s==='L'?'<span class="res L">패</span>':s.s==='R'?'<span class="res R">우취</span>':'<span class="res P">경기 전</span>';
+
+/* ---------- home ---------- */
+let viewMonth=(()=>{const d=new Date();return{y:d.getFullYear(),m:d.getMonth()}})();
+function renderHome(){
+  const T=todayStr(),season=tally(S.season.start,T),week=tally(weekStart(T),T),ts=dayStatus(T);
+  let today;
+  if(ts.s==='pending')today=`<p class="muted" style="margin:0">아직 기록 전이에요</p>`;
+  else if(ts.s==='R')today=`<p style="margin:0">우천취소 · ${esc(ts.r.rainout.reason)}${ts.r.rainout.memo?` · ${esc(ts.r.rainout.memo)}`:''}</p>`;
+  else today=`<p class="muted" style="margin:0 0 10px">만족 ${ts.ev.okN}/${ts.ev.total}${ts.ev.strikes?` · 아웃 ${ts.ev.strikes}`:''} · 전체 달성률 ${Math.round(rateOf(ts.ev))}%</p>${lineScore(ts.ev)}${(()=>{const dn=dayNet(T);return dn&&dn.n?`<p class="gotline ${dn.n<0?'neg':''}">${stickerChip(dn.type)} ${TYPE[dn.type].sticker} ${signed(dn.n)}${dn.pen?` · 아웃 ${ts.ev.strikes}개`:''}</p>`:''})()}`;
+  $('#view').innerHTML=`
+  ${heroHtml(S.home)}
+  <div class="wrap page">
+    <section class="card"><div class="head"><h2>오늘 · ${fmtMD(T)}</h2>${badge(ts)}</div>${today}</section>
+    <section class="card">
+      <div class="head"><button class="icon-btn" onclick="moveMonth(-1)" aria-label="이전 달">‹</button><h2>${viewMonth.y}년 ${viewMonth.m+1}월</h2><button class="icon-btn" onclick="moveMonth(1)" aria-label="다음 달">›</button></div>
+      <div class="cal">${calendarHtml()}</div>
+      <div class="legend"><span><i class="b W">승</i>승리</span><span><i class="b L">패</i>패배</span><span><i class="b L auto">패</i>미기록 패</span><span><i class="b R">우취</i>우천취소</span></div>
+    </section>
+  </div>`;
+}
+function lineScore(ev){return `<div class="linescore">${ev.items.map((i,n)=>`<span class="ls ${i.ok?'ok':i.strike?'k':'part'}" title="${esc(i.name)} ${Math.round(i.pct)}%"><small>${n+1}</small><b>${i.ok?'●':i.strike?'아웃':Math.round(i.pct)}</b></span>`).join('')}</div>`}
+function calendarHtml(){
+  const{y,m}=viewMonth,T=todayStr(),lead=(new Date(y,m,1).getDay()+6)%7,days=new Date(y,m+1,0).getDate();
+  let h=['월','화','수','목','금','토','일'].map(w=>`<div class="wd">${w}</div>`).join('');
+  for(let i=0;i<lead;i++)h+='<div></div>';
+  for(let d=1;d<=days;d++){const ds=ymd(new Date(y,m,d)),st=dayStatus(ds);
+    let b='',sub='';
+    if(st.s==='W'||st.s==='L'){b=`<i class="b ${st.s}${st.auto?' auto':''}">${st.s==='W'?'승':'패'}</i>`;sub=st.ev?`${st.ev.okN}/${st.ev.total}`:'미기록'}
+    else if(st.s==='R'){b='<i class="b R">우취</i>';sub=esc(st.r.rainout.reason)}
+    else if(st.s==='pending'){sub='기록 전'}
+    h+=`<button class="cell ${ds===T?'today':''} ${st.s==='off'?'off':''}" ${st.s==='future'?'disabled':''} onclick="openDay('${ds}')" aria-label="${fmtMD(ds)}"><span class="n">${d}${(()=>{const dn=dayNet(ds);return dn&&dn.n?`<em class="cs s-${dn.type} ${dn.n<0?'neg':''}">${TYPE[dn.type].icon}${dn.n!==1?`<i>${signed(dn.n)}</i>`:''}</em>`:''})()}</span>${b}<small>${sub}</small></button>`}
+  return h;
+}
+function moveMonth(n){let m=viewMonth.m+n,y=viewMonth.y;if(m<0){m=11;y--}if(m>11){m=0;y++}viewMonth={y,m};renderHome()}
+function openDay(d){if(d>todayStr())return;cur.date=d;cur.draft=null;if(location.hash==='#record')route();else location.hash='record'}
+
+/* ---------- daily record ---------- */
+let cur={date:todayStr(),draft:null};
+function draftFor(d){const r=S.records[d];
+  if(r)return{date:d,ex:r.ex.map(x=>({...x})),vals:{...r.vals},rule:{...r.rule},rainout:r.rainout?{...r.rainout}:null,existing:true};
+  return{date:d,ex:currentEx(),vals:{},rule:{...S.rule},rainout:null,existing:false}}
+function renderRecord(){
+  const T=todayStr();if(cur.date>T)cur.date=T;
+  if(!cur.draft||cur.draft.date!==cur.date)cur.draft=draftFor(cur.date);
+  const D=cur.draft;
+  $('#view').innerHTML=`<div class="wrap page">
+    <section class="card"><div class="datebar">
+      <button class="icon-btn" onclick="shiftDay(-1)" aria-label="전날">‹</button>
+      <div class="d">${fmtMD(cur.date)}</div>
+      <button class="icon-btn" onclick="shiftDay(1)" aria-label="다음날" ${cur.date>=T?'disabled':''}>›</button></div>
+      ${cur.date<S.season.start?`<p class="notice" style="margin:12px 0 0">기록 시작일(${S.season.start}) 이전 날짜예요. 저장하면 기록 시작일이 이 날짜로 당겨져요.</p>`:''}
+    </section>
+    <section class="card"><div class="preview" id="preview"></div></section>
+    <section class="card" id="exlist" ${D.rainout?'style="opacity:.45"':''}>
+      ${D.ex.map((x,xi)=>`<div class="exrow" id="row-${x.id}">
+        <div class="exinfo"><small class="inn-tag">${inningLabel(xi)}</small><b>${esc(x.name)}</b><small>목표 ${x.t}${esc(x.unit)}</small></div>
+        <div class="stepper"><button onclick="step('${x.id}',-1)" aria-label="${esc(x.name)} 줄이기">−</button><input id="v-${x.id}" type="number" inputmode="numeric" min="0" placeholder="0" value="${D.vals[x.id]??''}" oninput="setVal('${x.id}',this.value)" aria-label="${esc(x.name)} 기록"><button onclick="step('${x.id}',1)" aria-label="${esc(x.name)} 늘리기">+</button></div>
+        <div class="expct mono" id="s-${x.id}"></div></div>`).join('')}
+    </section>
+    <section class="card">
+      <label class="switch"><span><b>특이사항으로 우천취소</b></span><input type="checkbox" id="rainToggle" ${D.rainout?'checked':''} onchange="toggleRain(this.checked)"></label>
+      ${D.rainout?`<div style="display:grid;gap:10px;margin-top:12px"><div class="chips">${RAIN_REASONS.map(r=>`<button class="chip ${D.rainout.reason===r?'on':''}" onclick="setReason('${r}')">${r}</button>`).join('')}</div>
+      <input type="text" id="rainMemo" placeholder="메모 (선택)" value="${esc(D.rainout.memo||'')}" oninput="cur.draft.rainout.memo=this.value"></div>`:''}
+    </section>
+    <button class="btn primary block" onclick="saveRecord()">${D.existing?'기록 수정하기':'기록 저장하기'}</button>
+    ${D.existing?`<div class="row"><button class="btn ghost" style="flex:1" onclick="resyncTargets()">지금 목표로 다시 계산</button><button class="btn danger" style="flex:1" id="delBtn" onclick="deleteRecord(this)">기록 삭제</button></div>`:''}
+  </div>`;
+  updatePreview();
+}
+function updatePreview(){
+  const D=cur.draft,ev=evalRecord(D);
+  ev.items.forEach(i=>{const s=$('#s-'+i.id);if(s){s.textContent=i.strike?'아웃':Math.round(i.pct)+'%';s.className='expct mono '+(i.ok?'ok':i.strike?'k':'')}const r=$('#row-'+i.id);if(r)r.classList.toggle('ok',i.ok)});
+  let res,msg;
+  if(D.rainout){res='<span class="res R">우취</span>';msg=`우천취소 (${esc(D.rainout.reason)}) · 승률에 반영되지 않아요`}
+  else if(ev.win){res='<span class="res W">승</span>';msg=`목표 만족 <b>${ev.okN}/${ev.total}</b> · 승리 기준 ${ev.need}개 충족`}
+  else{res='<span class="res L">패</span>';msg=`목표 만족 <b>${ev.okN}/${ev.total}</b> · 승리까지 ${ev.need-ev.okN}개 더`}
+  const sr=(S.records[D.date]&&S.records[D.date].stickerRule)||ruleNow(D.date),{n,pen}=stickerCalc(ev,sr,D.rainout),nm=TYPE[sr.type].sticker;
+  const sline=D.rainout?'':`${stickerChip(sr.type)} ${nm} ${signed(n)} · `+(n===2?`승리 + ${ev.total}이닝 모두 채움`:n===1?'승리 · 모두 채우면 1개 더':'패한 날은 스티커 없음');
+  $('#preview').innerHTML=`${res}<p>${msg}${!D.rainout&&ev.strikes?`<br><span class="muted">아웃 ${ev.strikes}</span>`:''}${sline?`<br><span class="sline ${n-pen>0?'on':n-pen<0?'neg':''}">${sline}</span>`:''}</p>`;
+}
+function stepSize(id){const x=cur.draft.ex.find(e=>e.id===id);return x&&x.unit==='분'?5:1}
+function step(id,dir){const D=cur.draft;const v=Math.max(0,(Number(D.vals[id])||0)+dir*stepSize(id));D.vals[id]=v;$('#v-'+id).value=v;updatePreview()}
+function setVal(id,v){cur.draft.vals[id]=v===''?'':Math.max(0,Number(v)||0);updatePreview()}
+function shiftDay(n){const d=addDays(cur.date,n);if(d>todayStr())return;cur.date=d;cur.draft=null;renderRecord()}
+function toggleRain(on){cur.draft.rainout=on?{reason:'생리',memo:''}:null;renderRecord()}
+function setReason(r){cur.draft.rainout.reason=r;renderRecord()}
+function resyncTargets(){const D=cur.draft;D.ex=currentEx();D.rule={...S.rule};renderRecord();toast('현재 목표와 규칙으로 다시 계산했어요. 저장하면 반영돼요.')}
+function saveRecord(){
+  const D=cur.draft,vals={};D.ex.forEach(x=>vals[x.id]=Math.max(0,Number(D.vals[x.id])||0));
+  const rec={ex:D.ex,vals,rule:D.rule,rainout:D.rainout?{reason:D.rainout.reason,memo:D.rainout.memo||''}:null,savedAt:Date.now()};
+  const prev=S.records[D.date];applySticker(rec,D.date,prev&&prev.stickerRule?prev.stickerRule:null);
+  S.records[D.date]=rec;
+  let moved=false;if(D.date<S.season.start){S.season.start=D.date;moved=true}
+  if(!persist())return;
+  const st=dayStatus(D.date);cur.draft=null;renderRecord();
+  const dn=dayNet(D.date);
+  toast((st.s==='W'?'승리! ':st.s==='R'?'우천취소로 ':'패배. ')+'기록을 저장했어요'+(dn&&dn.n?` · ${TYPE[dn.type].sticker} ${signed(dn.n)}`:'')+(moved?' · 기록 시작일도 옮겼어요':''));
+}
+function deleteRecord(btn){if(!btn.dataset.armed){btn.dataset.armed=1;btn.textContent='한 번 더 누르면 삭제';setTimeout(()=>{if(btn.isConnected){delete btn.dataset.armed;btn.textContent='기록 삭제'}},3000);return}
+  delete S.records[cur.date];persist();cur.draft=null;renderRecord();toast('기록을 삭제했어요')}
+
+/* ---------- week ---------- */
+let viewWeek=weekStart(todayStr());
+function renderWeek(){
+  const T=todayStr(),ws=viewWeek,we=addDays(ws,6),t=tally(ws,we<T?we:T);
+  let days='';for(let i=0;i<7;i++){const d=addDays(ws,i),st=dayStatus(d);
+    let info=st.s==='future'?'예정':st.s==='off'?'기록 시작 전':st.s==='pending'?'아직 기록 전':st.s==='R'?`우천취소 · ${esc(st.r.rainout.reason)}`:st.auto?'기록 없음 (자동 패)':`만족 ${st.ev.okN}/${st.ev.total}${st.ev.strikes?` · 아웃 ${st.ev.strikes}`:''}`;
+    days+=`<button class="wkday" ${st.s==='future'?'disabled':''} onclick="openDay('${d}')"><span><b>${WD[parse(d).getDay()]}</b> <span class="muted">${fmtShort(d)}</span></span><span>${st.s==='future'||st.s==='off'?'':badge(st)}</span><span class="muted">${info}${(()=>{const dn=dayNet(d);return dn&&dn.n?` <span class="wknet ${dn.n<0?'neg':''}">${stickerChip(dn.type)}${signed(dn.n)}</span>`:''})()}</span></button>`}
+  // season by week
+  const rows=[];let cw=0,cl=0;
+  for(let w=weekStart(S.season.start);w<=T;w=addDays(w,7)){const e=addDays(w,6),x=tally(w,e<T?e:T);cw+=x.W;cl+=x.L;rows.push({w,x,cum:cw+cl?cw/(cw+cl):null})}
+  $('#view').innerHTML=`<div class="wrap page">
+    <section class="card"><div class="datebar">
+      <button class="icon-btn" onclick="moveWeek(-1)" aria-label="지난주">‹</button>
+      <div class="d" style="font-size:18px">${fmtShort(ws)} – ${fmtShort(we)}</div>
+      <button class="icon-btn" onclick="moveWeek(1)" aria-label="다음주" ${we>=T?'disabled':''}>›</button></div>
+      <div class="score" style="margin-top:14px;border-color:var(--line)">
+        <div><span class="muted">이번 주 성적</span><b style="font-family:var(--display);font-size:20px">${t.W}승 ${t.L}패</b></div>
+        <div style="border-color:var(--line)"><span class="muted">우천취소</span><b style="font-family:var(--display);font-size:20px">${t.R}</b></div>
+        <div style="border-color:var(--line)"><span class="muted">주간 승률</span><b class="mono" style="font-size:20px;color:var(--red)">${fmtPct(t.pct)}</b></div>
+      </div>
+    </section>
+    <section class="card">${days}</section>
+    <section class="card"><div class="head"><h2>시즌 주차별 기록</h2><span class="muted">기록 시작 ${S.season.start}</span></div>
+      <div class="tablewrap"><table><thead><tr><th>주차</th><th>승</th><th>패</th><th>우취</th><th>주간</th><th>누적</th></tr></thead><tbody>
+      ${rows.reverse().map((r,i)=>`<tr><td>${rows.length-i}주차 <span class="muted">${fmtShort(r.w)}</span></td><td>${r.x.W}</td><td>${r.x.L}</td><td>${r.x.R}</td><td class="mono">${fmtPct(r.x.pct)}</td><td class="mono"><b>${fmtPct(r.cum)}</b></td></tr>`).join('')}
+      </tbody></table></div></section>
+  </div>`;
+}
+function moveWeek(n){const w=addDays(viewWeek,7*n);if(w>todayStr())return;viewWeek=w;renderWeek()}
+
+/* ---------- settings menu ---------- */
+function subHead(t,desc){return `<div style="display:grid;gap:4px">${tour&&tour.step>=0?tourStepHtml():'<a class="back" href="#more">‹ 설정</a>'}<h1 class="title">${t}</h1>${desc?`<p class="muted" style="margin:0">${desc}</p>`:''}</div>`}
+function renderMore(){
+  const n=Object.keys(S.records).length;
+  $('#view').innerHTML=`<div class="wrap page"><h1 class="title">설정</h1>
+    <section class="card menu">
+      <a href="#look"><span><b>홈 화면 꾸미기</b><span class="muted">응원 문구 · 감독 소개 · 색상 · 글씨체</span></span>›</a>
+      <a href="#exercises"><span><b>운동 설정</b><span class="muted">${S.exercises.length}이닝 · 운동 종류, 하루 목표, 단위</span></span>›</a>
+      <a href="#rewards"><span><b>보상 설정</b><span class="muted">${S.reward.periodDays}일씩 타자·투수 번갈아 · 스티커 기준과 영입 가격</span></span>›</a>
+      <a href="#players"><span><b>선수 명단</b><span class="muted">${esc(S.team)} 타자 ${S.batters.length}명 · 투수 ${S.pitchers.length}명 · 사진</span></span>›</a>
+      <a href="#rules"><span><b>승리 기준 설정</b><span class="muted">${S.exercises.length}이닝 중 ${S.rule.winNeed}이닝 이상 만족하면 승</span></span>›</a>
+    </section>
+    <section class="card" style="display:grid;gap:8px"><div class="head" style="margin:0"><h2>시즌 개막일</h2>${ddayHtml().replace('class="dday"','class="dday light"')}</div>
+      
+      <div class="row"><input type="text" id="nextSeason" inputmode="numeric" maxlength="8" placeholder="예: 20270328" value="${S.nextSeason?S.nextSeason.replace(/-/g,''):''}" oninput="ddayPreview(this.value)" style="flex:1;font-family:var(--mono);letter-spacing:.08em"><button class="btn primary" onclick="saveOpening()">저장</button></div>
+      <p class="muted" id="ddayPrev" style="margin:0"></p></section>
+    <section class="card"><div class="head"><h2>기록 시작일</h2></div>
+      
+      <div class="row"><input type="date" id="seasonStart" value="${S.season.start}" max="${todayStr()}" style="flex:1"><button class="btn" onclick="saveSeason()">변경</button></div></section>
+    <section class="card"><div class="head"><h2>백업과 복원</h2><span class="muted">기록 ${n}일</span></div>
+      
+      <div class="row"><button class="btn" onclick="copyBackup()">백업 코드 복사</button><button class="btn" onclick="$('#importBox').hidden=!$('#importBox').hidden">백업 불러오기</button></div>
+      <textarea id="backupOut" readonly hidden style="margin-top:10px"></textarea>
+      <div id="importBox" hidden style="margin-top:10px;display:grid;gap:8px"><textarea id="importIn" placeholder="백업 코드를 붙여넣으세요"></textarea><button class="btn primary" onclick="importBackup()">이 백업으로 덮어쓰기</button></div>
+    </section>
+    <section class="card"><div class="head"><h2>처음 안내</h2></div><button class="btn" onclick="startTour()">튜토리얼 다시 보기</button></section>
+    <section class="card"><div class="head"><h2>전체 초기화</h2></div><button class="btn danger" onclick="resetAll(this)">전체 초기화</button></section>
+  </div>`;
+  ddayPreview($('#nextSeason').value);
+}
+function saveSeason(){const v=$('#seasonStart').value;if(!v||v>todayStr()){toast('오늘 이전 날짜를 골라 주세요');return}S.season.start=v;persist();toast('기록 시작일을 바꿨어요');renderMore()}
+function saveOpening(){const v=$('#nextSeason').value.trim();if(!v){S.nextSeason='';persist();toast('개막일을 지웠어요');renderMore();return}
+  const d=parseYmd8(v);if(!d){toast('날짜를 20270328처럼 8자리로 입력해 주세요');$('#nextSeason').focus();return}
+  S.nextSeason=d;persist();toast(`시즌 개막일을 저장했어요 · ${ddayInfo(d).label}`);renderMore()}
+function copyBackup(){const t=JSON.stringify(S),o=$('#backupOut');o.value=t;o.hidden=false;
+  const done=()=>toast('백업 코드를 복사했어요');
+  try{navigator.clipboard.writeText(t).then(done,()=>{o.select();toast('코드를 길게 눌러 복사해 주세요')})}catch(e){o.select();toast('코드를 길게 눌러 복사해 주세요')}}
+function importBackup(){try{const x=JSON.parse($('#importIn').value);if(!x||!x.records||!x.exercises)throw 0;S=migrate(x);backfillStickers();persist();applyTheme(S.theme);applyFonts(S.fonts);toast('백업을 불러왔어요');renderMore()}catch(e){toast('백업 코드가 올바르지 않아요. 전체를 붙여넣었는지 확인해 주세요')}}
+function resetAll(btn){if(!btn.dataset.armed){btn.dataset.armed=1;btn.textContent='정말 초기화하려면 한 번 더';setTimeout(()=>{if(btn.isConnected){delete btn.dataset.armed;btn.textContent='전체 초기화'}},3000);return}
+  S=defaults();persist();applyTheme(S.theme);applyFonts(S.fonts);toast('처음 상태로 되돌렸어요');renderMore()}
+
+/* ---------- exercise settings ---------- */
+let exDraft=null;
+function renderExercises(){
+  if(exDraft)syncExSafe();else exDraft=S.exercises.map(e=>({...e}));
+  $('#view').innerHTML=`<div class="wrap page">${subHead('운동 설정')}
+    <datalist id="unitHints">${UNIT_HINTS.map(u=>`<option value="${u}">`).join('')}</datalist>
+    <section class="card">${exDraft.map((e,i)=>`<div class="exedit">
+      <div class="inn"><span class="inning">${inningLabel(i)}</span><span class="row" style="gap:6px">
+        <button class="icon-btn sm" onclick="moveEx(${i},-1)" ${i===0?'disabled':''} aria-label="${inningLabel(i)} 앞으로">↑</button>
+        <button class="icon-btn sm" onclick="moveEx(${i},1)" ${i===exDraft.length-1?'disabled':''} aria-label="${inningLabel(i)} 뒤로">↓</button>
+        <button class="icon-btn sm minus-btn" onclick="removeEx(${i})" aria-label="${inningLabel(i)} 삭제">−</button></span></div>
+      <label class="fld" style="grid-column:1/-1">운동 종류<input type="text" id="en-${i}" value="${esc(e.name)}" placeholder="예: 스쿼트, 줄넘기, 물 2L"></label>
+      <label class="fld">하루 목표<input type="number" id="ed-${i}" min="0" inputmode="decimal" value="${e.daily}"></label>
+      <label class="fld">단위<input type="text" id="eu-${i}" list="unitHints" value="${esc(e.unit)}" placeholder="예: 세트"></label>
+    </div>`).join('')}</section>
+    <div class="row"><button class="btn" style="flex:1" onclick="addEx()">+ 이닝 추가</button><button class="btn primary own-save" style="flex:1" onclick="saveEx()">저장</button></div>
+  </div>`;
+}
+function syncExSafe(){if($('#en-0'))syncEx()}
+function syncEx(){exDraft.forEach((e,i)=>{e.name=$('#en-'+i).value.trim();e.daily=Math.max(0,Number($('#ed-'+i).value)||0);e.unit=$('#eu-'+i).value.trim()})}
+function addEx(){syncEx();exDraft.push({id:uid('ex'),name:'',unit:'세트',daily:3});renderExercises();const el=$('#en-'+(exDraft.length-1));if(el){el.focus();el.scrollIntoView({block:'center'})}}
+function removeEx(i){syncEx();if(exDraft.length<=1){toast('이닝은 최소 1개 있어야 해요');return}exDraft.splice(i,1);renderExercises()}
+function moveEx(i,d){syncEx();const j=i+d;if(j<0||j>=exDraft.length)return;[exDraft[i],exDraft[j]]=[exDraft[j],exDraft[i]];renderExercises()}
+function saveEx(){syncEx();
+  const bad=exDraft.findIndex(e=>!e.name);if(bad>=0){toast(`${inningLabel(bad)}의 운동 종류를 입력해 주세요`);$('#en-'+bad).focus();return false}
+  exDraft.forEach(e=>{if(!e.unit)e.unit='회'});
+  S.exercises=exDraft.map(e=>({...e}));if(S.rule.winNeed>S.exercises.length)S.rule.winNeed=S.exercises.length;
+  persist();exDraft=null;cur.draft=null;toast('운동 설정을 저장했어요');renderExercises();return true}
+
+/* ---------- player collection (dex) ---------- */
+let dexType=null;
+function renderDex(){
+  const T=todayStr(),P=periodOf(T),type=dexType||P.type,W=wallet(),left=Math.round((parse(P.end)-parse(T))/864e5)+1;
+  const r=S.records[T],tr=r&&!r.rainout?Math.round(rateOf(evalRecord(r))):null;
+  const nm=TYPE[P.type].sticker,R=S.reward;
+  const tn=dayNet(T),todayLine=!r?'오늘 기록 전':r.rainout?'오늘은 우천취소':tn&&tn.n?`오늘 ${TYPE[tn.type].sticker} ${signed(tn.n)}`:'오늘 스티커 없음';
+  const list=groupsOf(type),inGroups=list.filter(p=>p.group),own=inGroups.filter(p=>S.owned[p.id]).length;
+  const cnt=t=>{const l=groupsOf(t).filter(p=>p.group);return `${l.filter(p=>S.owned[p.id]).length}/${l.length}`};
+  let groups='';for(let g=1;g<=5;g++){const ps=list.filter(p=>p.group===g);if(!ps.length)continue;
+    groups+=`<div class="grp-h"><b>${g}그룹</b><span class="price">${TYPE[type].icon}${priceOf(g)}개</span></div><div class="pgrid">${ps.map(p=>pcard(p)).join('')}</div>`}
+  const out=list.filter(p=>!p.group);
+  $('#view').innerHTML=`<div class="wrap page">
+    <h1 class="title">선수단</h1>${dexTabs('dex')}
+    <section class="period"><div class="pico">${TYPE[P.type].icon}</div><div style="min-width:0">
+      <small>지금은</small><b>${TYPE[P.type].label} 보상 기간</b>
+      <span>${fmtShort(P.start)} – ${fmtShort(P.end)} · ${left}일 남음 · 다음은 ${TYPE[other(P.type)].label}</span></div></section>
+    <section class="card wallet">${['bat','ball'].map(t=>`<div class="wl wl-${t}"><span class="wl-ico">${TYPE[t].icon}</span><div><b class="${W[t]<0?'neg':''}">${fmtCount(W[t])}</b><small>${TYPE[t].sticker}</small></div></div>`).join('')}
+      <p class="muted" style="grid-column:1/-1;margin:0">${todayLine}</p></section>
+    <div class="seg small" role="tablist">${['bat','ball'].map(t=>`<button role="tab" aria-selected="${t===type}" onclick="dexType='${t}';renderDex()">${TYPE[t].label} <span class="mono">${cnt(t)}</span></button>`).join('')}</div>
+    <section class="card">
+      <div class="head"><h2>${esc(S.team)} ${TYPE[type].label} · ${TYPE[type].stat} 순</h2><span class="muted">영입 ${own}/${inGroups.length}</span></div>
+      <div class="progress"><i style="width:${inGroups.length?own/inGroups.length*100:0}%"></i></div>
+      ${groups||`<p class="muted">명단이 비어 있어요</p>`}
+      ${out.length?`<p class="muted" style="margin:16px 0 6px">그룹 밖 선수</p><p style="margin:0;font-size:13px">${out.map(p=>esc(p.name)).join(', ')}</p>`:''}
+    </section>
+  </div>`;
+}
+function pcard(p){const o=S.owned[p.id];
+  return `<button class="pcard ${o?'own':''}" onclick="askBuy('${p.id}')">${photoHtml(p)}<b>${esc(p.name)}</b><small class="mono">${TYPE[p.type].stat} ${TYPE[p.type].fmt(p.stat)}</small>
+    <span class="pstate">${o?`영입 · ${fmtShort(o.date)}`:`${TYPE[p.type].icon}${priceOf(p.group)}`}</span></button>`}
+function askBuy(id){const p=findPlayer(id);if(!p)return;const o=S.owned[id],W=wallet(),cost=p.group?priceOf(p.group):null,t=TYPE[p.type];
+  let body;
+  if(o)body=`<p>${fmtMD(o.date)}에 ${t.sticker} ${o.cost}개로 영입했어요.</p><div class="row"><button class="btn block" onclick="closeSheet()">닫기</button></div>`;
+  else if(!p.group)body=`<p class="muted">그룹 밖 선수라 지금은 영입할 수 없어요.</p><div class="row"><button class="btn block" onclick="closeSheet()">닫기</button></div>`;
+  else if(W[p.type]<cost)body=`<p>${p.group}그룹 선수는 ${t.sticker} <b>${cost}개</b>가 필요해요. 지금 ${fmtCount(W[p.type])}개라 <b>${cost-W[p.type]}개</b> 더 모아야 해요.</p><div class="row"><button class="btn block" onclick="closeSheet()">닫기</button></div>`;
+  else body=`<p>${t.sticker} <b>${cost}개</b>로 영입할까요? 남는 ${t.sticker}: ${W[p.type]-cost}개</p><div class="row"><button class="btn" style="flex:1" onclick="closeSheet()">취소</button><button class="btn primary" style="flex:2" onclick="buy('${id}')">영입하기</button></div>`;
+  openSheet(`<div class="sheet-card ${o?'own':''}">${photoHtml(p,'pimg big')}<small>${p.group?p.group+'그룹 · ':''}${t.label} · ${t.stat} ${t.fmt(p.stat)}</small><h2>${esc(p.name)}</h2></div>${body}`)}
+function buy(id){const p=findPlayer(id),W=wallet();if(!p||!p.group||S.owned[id])return;const cost=priceOf(p.group);if(W[p.type]<cost){toast(`${TYPE[p.type].sticker}이 모자라요`);return}
+  S.owned[id]={type:p.type,cost,date:todayStr(),name:p.name};if(!persist()){delete S.owned[id];return}
+  openSheet(`<div class="sheet-card own reveal">${photoHtml(p,'pimg big')}<small>${p.group}그룹 · ${TYPE[p.type].label}</small><h2>${esc(p.name)}</h2><p class="got">영입 완료!</p></div><div class="row"><button class="btn primary block" onclick="closeSheet()">확인</button></div>`);
+  renderDex()}
+function openSheet(html){const s=$('#sheet');s.innerHTML=`<div class="sheet-bg" onclick="closeSheet()"></div><div class="sheet-in" role="dialog" aria-modal="true">${html}</div>`;s.hidden=false}
+function closeSheet(){const s=$('#sheet');s.hidden=true;s.innerHTML=''}
+
+/* ---------- reward settings (rules + rosters + photos) ---------- */
+let rwDraft=null;
+let rwPart='rewards';
+function renderRewards(part){if(part==='rewards'||part==='players')rwPart=part;const showRules=rwPart==='rewards',showPlayers=rwPart==='players';
+  if(!rwDraft)rwDraft={team:S.team,reward:{...S.reward},batters:S.batters.map(p=>({...p})),pitchers:S.pitchers.map(p=>({...p}))};
+  const R=rwDraft;
+  const roster=type=>{const key=TYPE[type].list,n=Math.max(1,R.reward.groupSize|0),val=p=>p.stat===''||p.stat==null||isNaN(Number(p.stat))?-Infinity:Number(p.stat);
+    const order=[...R[key]].sort((a,b)=>val(b)-val(a)).map(p=>p.id);
+    return `<section class="card" id="roster-${type}"><div class="head"><h2>${TYPE[type].label} 명단 · ${TYPE[type].stat}</h2><span class="muted">${R[key].length}명</span></div>
+      ${R[key].map((p,i)=>{const rank=order.indexOf(p.id),g=rank<n*5?Math.floor(rank/n)+1:null;return `<div class="rrow">
+        <label class="rphoto" for="ph-${p.id}" title="사진 바꾸기">${photoHtml(p,'pimg sm')}</label><input type="file" id="ph-${p.id}" accept="image/*" onchange="pickPhoto(this,'${p.id}')">
+        <input type="text" id="rn-${type}-${i}" value="${esc(p.name)}" placeholder="선수 이름" aria-label="선수 이름">
+        <input type="text" id="rs-${type}-${i}" value="${p.stat??''}" inputmode="decimal" placeholder="${TYPE[type].stat}" aria-label="${TYPE[type].stat}" class="mono">
+        <span class="rg">${g?g+'그룹':'밖'}</span>
+        <button class="icon-btn sm minus-btn" onclick="removeRosterRow('${type}',${i})" aria-label="${esc(p.name)} 삭제">−</button></div>`}).join('')}
+      <button class="btn" style="width:100%;margin-top:10px" onclick="addRosterRow('${type}')">+ ${TYPE[type].label} 추가</button></section>`};
+  $('#view').innerHTML=`<div class="wrap page">${showRules?subHead('보상 설정'):subHead('선수 명단')}
+    ${showRules?`<section class="card" style="display:grid;gap:12px"><h2>보상 규칙</h2>
+      <div class="rulebox">
+        <p>이기면 스티커 1개, ${S.exercises.length}이닝을 모두 채우면 1개를 더 받아요. 패한 날은 스티커가 없어요.</p>
+        <p>기록 없이 지나간 날은 스티커 1개를 빼요. 우천취소는 빼지 않아요.</p>
+        <p>${R.reward.periodDays}일마다 타자 기간(방망이 스티커)과 투수 기간(야구공 스티커)이 번갈아 와요.</p>
+        <p>방망이로 타자를, 야구공으로 투수를 영입해요.</p></div>
+      <div class="grid2">
+        <label class="fld">보상 기간 (일)<input type="number" id="rw-days" min="1" max="60" value="${R.reward.periodDays}"></label>
+        <label class="fld">첫 기간<select id="rw-first"><option value="bat" ${R.reward.firstType==='bat'?'selected':''}>타자 (방망이)</option><option value="ball" ${R.reward.firstType==='ball'?'selected':''}>투수 (야구공)</option></select></label>
+        <label class="fld">그룹당 인원<input type="number" id="rw-size" min="1" max="20" value="${R.reward.groupSize}" onchange="syncRw();renderRewards()"></label>
+      </div>
+</section>
+    <section class="card" style="display:grid;gap:8px"><div class="head" style="margin:0"><h2>영입 가격</h2></div>
+      ${[1,2,3,4,5].map(g=>{const pr=Math.max(1,(R.reward.prices||[8,7,5,4,3])[g-1]|0);return `<div class="pricerow"><b>${g}그룹</b><label class="pricein"><input type="number" id="rw-price-${g}" min="1" max="99" value="${pr}" oninput="pricePreview()" aria-label="${g}그룹 가격"><span>개</span></label><span class="muted" id="rw-week-${g}">한 주 최대 ${Math.floor(14/pr)}명</span></div>`}).join('')}
+</section>`:''}
+    ${showPlayers?`<section class="card" style="display:grid;gap:8px"><h2>구단</h2><input type="text" id="rw-team" value="${esc(R.team)}" placeholder="예: KIA 타이거즈" aria-label="구단"></section>
+    ${bulkHtml()}${roster('bat')}${roster('ball')}
+    `:''}
+    <button class="btn primary block own-save" onclick="saveRewards()">저장</button></div>`;
+}
+/* ---------- bulk roster input: pasted text, PDF, screenshots ---------- */
+let bulk={type:'bat',text:'',rows:null,teamSel:'',busy:false,msg:'',err:false,ctl:null};
+let sampleFn=null,sampleImgs=false,sampleMax=1;
+(async()=>{try{if(!window.claude||!claude.use)return;const s=await claude.use('sample');if(!s)return;sampleFn=s;
+  const l=await s.limits().catch(()=>null);sampleImgs=!!(l&&l.images);sampleMax=l&&l.images?l.images.maxCount:1;refreshBulk()}catch(e){}})();
+const STOPWORDS=new Set('명단 엔트리 선발 불펜 마무리 구원 외국인 신인 선수 선수명 이름 성명 순위 팀 팀명 구단 합계 평균 기록 기록실 타자 투수 포수 내야수 외야수 지명타자 감독 코치 등번호 생년월일 신장 체중 포지션 우투우타 우투좌타 좌투좌타 좌투우타 우언우타 좌언좌타 육성선수 타이거즈 라이온즈 트윈스 베어스 위즈 랜더스 자이언츠 이글스 다이노스 히어로즈 시즌 정규시즌 전체 경기 타율 출루율 장타율 평균자책점 승리 패배 세이브 홀드 이닝 삼진 볼넷 안타 홈런 타점 득점 도루'.split(' '));
+const TEAM_MAP={KIA:'KIA','기아':'KIA','삼성':'삼성',LG:'LG','두산':'두산',KT:'KT',SSG:'SSG','롯데':'롯데','한화':'한화',NC:'NC','키움':'키움'};
+const teamOf=tok=>TEAM_MAP[tok]||TEAM_MAP[String(tok).toUpperCase()]||null;
+const NUM_RE=/^[+-]?(\d+(\.\d+)?|\.\d+)$/;
+const isName=x=>/^[가-힣]{2,6}$/.test(x)&&!STOPWORDS.has(x)&&!teamOf(x);
+function tokenize(l){return(l.includes('\t')?l.split('\t'):l.split(/\s+/)).map(x=>x.trim().replace(/\(.*?\)/g,'').replace(/^[*#·•]+/,'').replace(/,/g,'')).filter(Boolean)}
+/* finds names (and the OPS/WAR column when a header row names it) in copied tables or PDF text */
+function parseRoster(text,type){
+  const key=TYPE[type].stat.toUpperCase(),out=[],seen=new Set();let head=null,statIdx=-1,nameIdx=-1,teamIdx=-1,multi=0;
+  for(const line of String(text).split(/\r?\n/)){const tk=tokenize(line.trim());if(!tk.length)continue;
+    const si=tk.map(x=>x.toUpperCase()).indexOf(key);
+    if(si>=0&&!tk.some(x=>NUM_RE.test(x))){head=tk;statIdx=si;nameIdx=tk.findIndex(x=>/^(선수명|선수|이름|성명|NAME)$/i.test(x));teamIdx=tk.findIndex(x=>/^(팀명|팀|구단|TEAM)$/i.test(x));continue}
+    const aligned=head&&tk.length===head.length;
+    let name=aligned&&nameIdx>=0?tk[nameIdx]:null;if(!name||!isName(name))name=tk.find(isName)||null;
+    if(!name||seen.has(name))continue;
+    let team=aligned&&teamIdx>=0?teamOf(tk[teamIdx]):null;if(!team)for(const x of tk){const t=teamOf(x);if(t){team=t;break}}
+    let stat=null;
+    if(head){const v=aligned?tk[statIdx]:tk[tk.length-(head.length-statIdx)];if(v!=null&&NUM_RE.test(v))stat=Number(v)}
+    else{const nums=tk.filter(x=>NUM_RE.test(x)&&x.includes('.'));if(nums.length===1)stat=Number(nums[0]);else if(nums.length>1)multi++}
+    seen.add(name);out.push({name,stat,team,on:true})}
+  out.multi=multi;out.hadHeader=!!head;return out}
+const myTeam=()=>teamOf(String(S.team||'').trim().split(/\s+/)[0]||'');
+function bulkSetRows(rows,msg){bulk.rows=rows;const teams=[...new Set(rows.map(r=>r.team).filter(Boolean))];
+  bulk.teamSel=teams.length>1?(teams.includes(myTeam())?myTeam():teams[0]):'';bulk.busy=false;bulk.ctl=null;bulk.msg=msg;bulk.err=false;refreshBulk()}
+function bulkMsg(m,err){bulk.busy=false;bulk.ctl=null;bulk.msg=m;bulk.err=!!err;refreshBulk()}
+function refreshBulk(){const el=$('#bulk');if(el)el.outerHTML=bulkHtml()}
+function setBulkType(t){bulk={...bulk,type:t,rows:null,msg:'',err:false};refreshBulk()}
+function bulkParseText(){const v=($('#bulkText')||{}).value||'';bulk.text=v;if(!v.trim()){bulkMsg('먼저 표나 명단을 붙여넣어 주세요',true);return}
+  const rows=parseRoster(v,bulk.type);if(!rows.length){bulkMsg('선수 이름을 찾지 못했어요. 이름이 들어간 줄을 함께 복사했는지 확인해 주세요.',true);return}
+  bulkSetRows(rows,`${rows.length}명을 찾았어요.`)}
+function bulkHtml(){const B=bulk,t=TYPE[B.type];
+  return `<section class="card bulk" id="bulk"><div class="head" style="margin:0"><h2>한 번에 입력</h2></div>
+    <div class="seg small" role="tablist">${['bat','ball'].map(k=>`<button role="tab" aria-selected="${k===B.type}" onclick="setBulkType('${k}')" ${B.busy?'disabled':''}>${TYPE[k].label} · ${TYPE[k].stat}</button>`).join('')}</div>
+    
+    <textarea id="bulkText" placeholder="예)&#10;선수명&#9;팀명&#9;${t.stat}&#10;김도영&#9;KIA&#9;${B.type==='bat'?'1.060':'5.28'}" oninput="bulk.text=this.value">${esc(B.text)}</textarea>
+    <div class="row">
+      <button class="btn primary" onclick="bulkParseText()" ${B.busy?'disabled':''}>붙여넣은 내용 읽기</button>
+      <label class="filebtn" for="bulkFile">${sampleImgs?'PDF·사진 불러오기':'PDF 불러오기'}</label><input type="file" id="bulkFile" accept="${sampleImgs?'application/pdf,.pdf,image/*':'application/pdf,.pdf'}" onchange="bulkFile(this)" ${B.busy?'disabled':''}>
+      ${sampleFn?`<button class="btn" onclick="bulkAskClaude()" ${B.busy?'disabled':''}>Claude로 정리하기</button>`:''}
+    </div>
+    ${B.busy?`<div class="notice row" style="margin:0;justify-content:space-between"><span>${esc(B.msg)}</span>${B.ctl?'<button class="btn ghost" style="padding:4px 10px" onclick="bulk.ctl&&bulk.ctl.abort()">멈추기</button>':''}</div>`:B.msg?`<p class="${B.err?'warn':'muted'}" style="margin:0">${esc(B.msg)}</p>`:''}
+    ${B.rows&&!B.busy?bulkPreview():''}
+  </section>`}
+function bulkPreview(){const B=bulk,t=TYPE[B.type],list=rwDraft?rwDraft[t.list]:S[t.list],teams=[...new Set(B.rows.map(r=>r.team).filter(Boolean))];
+  const shown=B.rows.map((r,i)=>({...r,i})).filter(r=>!B.teamSel||!r.team||r.team===B.teamSel),picked=shown.filter(r=>r.on).length;
+  return `<div class="bkprev">
+    ${teams.length>1?`<label class="fld">어느 구단 선수만 넣을까요?<select id="bulkTeam" onchange="bulk.teamSel=this.value;refreshBulk()">${teams.map(x=>`<option ${x===B.teamSel?'selected':''}>${esc(x)}</option>`).join('')}</select></label>`:''}
+    ${B.rows.multi&&!B.rows.hadHeader?`<p class="warn" style="margin:0">숫자가 여러 개라 ${t.stat}을 고르지 못한 줄이 있어요. ${t.stat} 제목 줄도 함께 붙여넣거나${sampleFn?' Claude로 정리해':' 아래 명단에서 직접 고쳐'} 주세요.</p>`:''}
+    <div class="bklist">${shown.map(r=>{const ex=list.find(p=>p.name===r.name);
+      const st=!ex?'새 선수':r.stat!=null&&Number(ex.stat)!==r.stat&&!(ex.stat===''&&r.stat==null)?'기록 갱신':'이미 있음';
+      return `<label class="bkrow"><input type="checkbox" ${r.on?'checked':''} onchange="bulk.rows[${r.i}].on=this.checked"><b>${esc(r.name)}</b><span class="mono">${t.fmt(r.stat)}</span><span class="bkst ${st==='새 선수'?'new':''}">${st}</span></label>`}).join('')}</div>
+    <div class="row"><button class="btn" style="flex:1" onclick="bulk.rows=null;bulk.msg='';refreshBulk()">취소</button>
+      <button class="btn" style="flex:1" onclick="applyBulk('replace')">명단 바꾸기</button>
+      <button class="btn primary" style="flex:1.3" onclick="applyBulk('merge')">명단에 더하기</button></div>
+  </div>`}
+function applyBulk(mode){if(!rwDraft)return;syncRw();const t=TYPE[bulk.type],list=rwDraft[t.list],pre=bulk.type==='bat'?'b':'p';
+  const rows=bulk.rows.filter(r=>r.on&&(!bulk.teamSel||!r.team||r.team===bulk.teamSel));
+  if(!rows.length){toast('넣을 선수를 하나 이상 체크해 주세요');return}
+  let added=0,updated=0;
+  if(mode==='replace'){const next=rows.map(r=>{const ex=list.find(p=>p.name===r.name);if(ex){if(r.stat!=null&&Number(ex.stat)!==r.stat)updated++;return{...ex,stat:r.stat??ex.stat}}added++;return{id:uid(pre),name:r.name,stat:r.stat??''}});
+    const keep=list.filter(p=>S.owned[p.id]&&!next.some(n=>n.id===p.id));rwDraft[t.list]=[...next,...keep];
+    toast(`명단을 ${next.length}명으로 바꿨어요${keep.length?` · 영입한 ${keep.length}명은 남겼어요`:''}. 아래 저장을 눌러 주세요`)}
+  else{rows.forEach(r=>{const ex=list.find(p=>p.name===r.name);if(ex){if(r.stat!=null&&Number(ex.stat)!==r.stat){ex.stat=r.stat;updated++}}else{list.push({id:uid(pre),name:r.name,stat:r.stat??''});added++}});
+    toast(`새 선수 ${added}명, 기록 갱신 ${updated}명. 아래 저장을 눌러 주세요`)}
+  bulk={...bulk,rows:null,text:'',msg:'',err:false};renderRewards();const sec=$(`#roster-${bulk.type}`);if(sec)sec.scrollIntoView({block:'start'})}
+
+/* PDF: pdf.js from cdnjs, loaded only when a PDF is picked; runs in the page (no worker file needed) */
+let pdfjsP=null;
+function loadScript(src){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=()=>rej(new Error('load'));document.head.appendChild(s)})}
+function loadPdfjs(){if(!pdfjsP){const b='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';pdfjsP=loadScript(b+'pdf.worker.min.js').then(()=>loadScript(b+'pdf.min.js')).then(()=>window.pdfjsLib);pdfjsP.catch(()=>{pdfjsP=null})}return pdfjsP}
+async function openPdf(file){const lib=await loadPdfjs();return lib.getDocument({data:new Uint8Array(await file.arrayBuffer()),isEvalSupported:false}).promise}
+async function pdfText(pdf){const out=[],n=Math.min(pdf.numPages,30);
+  for(let p=1;p<=n;p++){const page=await pdf.getPage(p),tc=await page.getTextContent(),rows=[];
+    tc.items.forEach(it=>{if(!it.str||!it.str.trim())return;const x=it.transform[4],y=it.transform[5];let r=rows.find(r=>Math.abs(r.y-y)<3);if(!r){r={y,items:[]};rows.push(r)}r.items.push({x,w:it.width||0,s:it.str})});
+    rows.sort((a,b)=>b.y-a.y).forEach(r=>{r.items.sort((a,b)=>a.x-b.x);let line='',end=null;r.items.forEach(i=>{if(end!=null&&i.x-end>2)line+='\t';line+=i.s;end=i.x+i.w});out.push(line)})}
+  return out.join('\n')}
+async function pdfImages(pdf){const n=Math.min(pdf.numPages,Math.max(1,sampleMax),4),blobs=[];
+  for(let p=1;p<=n;p++){const page=await pdf.getPage(p),v0=page.getViewport({scale:1}),v=page.getViewport({scale:Math.min(2.5,1600/v0.width)});
+    const c=document.createElement('canvas');c.width=Math.ceil(v.width);c.height=Math.ceil(v.height);const ctx=c.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,c.width,c.height);
+    await page.render({canvasContext:ctx,viewport:v}).promise;blobs.push(await new Promise(r=>c.toBlob(r,'image/jpeg',.85)))}
+  return blobs}
+async function bulkFile(input){const f=input.files&&input.files[0];input.value='';if(!f)return;
+  const isPdf=f.type==='application/pdf'||/\.pdf$/i.test(f.name);
+  if(!isPdf){if(!/^image\//.test(f.type)){bulkMsg('PDF나 사진 파일을 골라 주세요',true);return}
+    if(!sampleImgs){bulkMsg('사진은 Claude가 읽어야 해서 지금은 쓸 수 없어요. 표를 복사해 붙여넣거나 PDF를 써 주세요.',true);return}
+    return bulkClaude({images:[f],what:'캡처 사진'})}
+  bulk.busy=true;bulk.ctl=null;bulk.msg='PDF를 읽는 중이에요…';refreshBulk();
+  let pdf;try{pdf=await openPdf(f)}catch(e){bulkMsg('PDF를 열지 못했어요. 인터넷 연결을 확인하거나, 표를 복사해 붙여넣어 주세요.',true);return}
+  let text='';try{text=await pdfText(pdf)}catch(e){}
+  const rows=text?parseRoster(text,bulk.type):[];
+  if(rows.length){bulk.text=text;bulkSetRows(rows,`PDF에서 ${rows.length}명을 찾았어요.${sampleFn?' 결과가 이상하면 Claude로 정리하기를 눌러 보세요.':''}`);return}
+  if(sampleImgs){try{const imgs=await pdfImages(pdf);return bulkClaude({images:imgs,what:'PDF 페이지'})}catch(e){}}
+  bulkMsg('PDF에서 선수 이름을 찾지 못했어요. 표를 복사해 붙여넣어 주세요.',true)}
+function bulkAskClaude(){const v=($('#bulkText')||{}).value||'';bulk.text=v;if(!v.trim()){bulkMsg('먼저 표나 명단을 붙여넣어 주세요',true);return}bulkClaude({text:v})}
+async function bulkClaude({text,images,what}){if(!sampleFn){bulkMsg('지금은 Claude를 부를 수 없어요.',true);return}
+  const t=TYPE[bulk.type],team=S.team||'지정한';
+  bulk.busy=true;bulk.ctl=new AbortController();bulk.msg='Claude가 읽는 중이에요… 보통 10~40초 걸려요';bulk.err=false;refreshBulk();
+  const prompt=`${images?`첨부한 이미지는 야구 선수 명단이나 기록표의 ${what}이에요.`:'아래는 웹페이지나 PDF에서 복사한 야구 선수 명단·기록 자료예요.'}
+${team} 구단의 ${t.label}만 골라서 선수 이름과 ${t.stat} 값을 뽑아 주세요.
+- 자료에 구단이 적혀 있으면 ${team} 선수만 남기고, 구단이 적혀 있지 않으면 모두 이 구단 선수로 보세요.
+- ${t.stat} 값이 자료에 없으면 stat을 null로 두세요. 타율, 평균자책점 같은 다른 지표를 대신 넣지 마세요.
+- 자료에 없는 선수나 숫자를 지어내지 마세요. 이름은 자료에 적힌 한글 이름 그대로 쓰세요.
+JSON 배열로만 답하세요. 예: [{"name":"김도영","stat":1.060},{"name":"박민","stat":null}]${text?`\n\n자료:\n${text.slice(0,60000)}`:''}`;
+  try{const arr=await sampleFn.json(prompt,images?{images,signal:bulk.ctl.signal}:{signal:bulk.ctl.signal});
+    const seen=new Set(),rows=(Array.isArray(arr)?arr:[]).map(o=>({name:String((o&&o.name)||'').replace(/\s+/g,'').trim(),stat:o&&o.stat!=null&&o.stat!==''&&!isNaN(Number(o.stat))?Number(o.stat):null,team:null,on:true}))
+      .filter(r=>r.name&&r.name.length<=12&&!seen.has(r.name)&&seen.add(r.name));
+    if(rows.length)bulkSetRows(rows,`Claude가 ${rows.length}명을 찾았어요. 이름과 ${t.stat}이 맞는지 확인해 주세요.`);
+    else bulkMsg('선수를 찾지 못했어요. 다른 자료로 해 보세요.',true)}
+  catch(e){const code=e&&e.code;
+    if(['not_granted','sampling_disabled','not_declared','capability_disabled','capability_removed'].includes(code)){sampleFn=null;sampleImgs=false}
+    if(code==='images_unavailable')sampleImgs=false;
+    const m={cancelled:'멈췄어요.',not_granted:'Claude 사용을 허용하지 않아 이 기능을 쓸 수 없어요.',sampling_disabled:'이 계정에서는 Claude를 부를 수 없어요.',
+      rate_limited:'요청이 많아요. 잠시 뒤에 다시 눌러 주세요.',image_rejected:'이 파일은 읽을 수 없어요. 다른 파일을 골라 주세요.',images_unavailable:'지금은 사진을 보낼 수 없어요. 표를 복사해 붙여넣어 주세요.',
+      invalid_json:'Claude의 답을 명단으로 바꾸지 못했어요. 한 번 더 눌러 주세요.',prompt_too_large:'자료가 너무 길어요. 우리 구단 부분만 붙여넣어 주세요.',
+      refused:'Claude가 이 자료를 읽지 않았어요. 다른 자료로 해 보세요.',session_expired:'다시 로그인한 뒤 해 주세요.'}[code]||'Claude를 부르지 못했어요. 잠시 뒤에 다시 해 주세요.';
+    bulkMsg(m,code!=='cancelled')}}
+
+function syncRw(){const R=rwDraft;if(!R)return;if($('#rw-team'))R.team=$('#rw-team').value.trim();if($('#rw-days')){R.reward.periodDays=Math.max(1,Math.min(60,Number($('#rw-days').value)||14));R.reward.firstType=$('#rw-first').value;
+  R.reward.prices=[1,2,3,4,5].map(g=>Math.max(1,Math.min(99,Math.round(Number($('#rw-price-'+g).value)||1))));R.reward.groupSize=Math.max(1,Math.min(20,Math.round(Number($('#rw-size').value)||3)));}
+  ['bat','ball'].forEach(t=>R[TYPE[t].list].forEach((p,i)=>{if(!$(`#rn-${t}-${i}`))return;p.name=$(`#rn-${t}-${i}`).value.trim();const v=$(`#rs-${t}-${i}`).value.trim();p.stat=v===''||isNaN(Number(v))?'':Number(v)}))}
+function pricePreview(){[1,2,3,4,5].forEach(g=>{const v=Math.max(1,Number($('#rw-price-'+g).value)||1);$('#rw-week-'+g).textContent=`한 주 최대 ${Math.floor(14/v)}명`})}
+function addRosterRow(t){syncRw();rwDraft[TYPE[t].list].push({id:uid(t==='bat'?'b':'p'),name:'',stat:''});renderRewards();const i=rwDraft[TYPE[t].list].length-1,el=$(`#rn-${t}-${i}`);if(el){el.focus();el.scrollIntoView({block:'center'})}}
+function removeRosterRow(t,i){syncRw();rwDraft[TYPE[t].list].splice(i,1);renderRewards()}
+function saveRewards(){syncRw();const R=rwDraft;
+  for(const t of['bat','ball']){const bad=R[TYPE[t].list].findIndex(p=>!p.name);if(bad>=0){toast(`${TYPE[t].label} 이름이 빈 칸이 있어요`);const el=$(`#rn-${t}-${bad}`);if(el)el.focus();return false}}
+  S.team=R.team||'내 구단';S.reward={...R.reward};S.batters=R.batters.map(p=>({...p}));S.pitchers=R.pitchers.map(p=>({...p}));
+  persist();rwDraft=null;toast(rwPart==='players'?'선수 명단을 저장했어요':'보상 설정을 저장했어요');renderRewards();return true}
+function pickPhoto(input,id){const f=input.files&&input.files[0];if(!f)return;
+  const fr=new FileReader();fr.onload=()=>{const img=new Image();img.onload=()=>{const s=160,c=document.createElement('canvas');c.width=c.height=s;
+    const k=Math.max(s/img.width,s/img.height),w=img.width*k,h=img.height*k;c.getContext('2d').drawImage(img,(s-w)/2,(s-h)/2,w,h);
+    S.photos[id]=c.toDataURL('image/jpeg',.82);if(persist())toast('사진을 등록했어요');if(rwDraft)syncRw();renderRewards()};
+    img.onerror=()=>toast('이 파일은 이미지로 열 수 없어요');img.src=fr.result};fr.readAsDataURL(f)}
+
+/* ---------- our team: lineup scoreboard, field and bullpen ---------- */
+const POS=[['C','포수'],['1B','1루수'],['2B','2루수'],['3B','3루수'],['SS','유격수'],['LF','좌익수'],['CF','중견수'],['RF','우익수'],['DH','지명타자']];
+const posName=c=>(POS.find(p=>p[0]===c)||['',''])[1];
+/* field positions in a 360x300 drawing, home plate at bottom centre */
+const FIELD_XY={C:[180,282],'1B':[266,198],'2B':[226,160],'3B':[94,198],SS:[134,160],LF:[74,104],CF:[180,58],RF:[286,104]};
+let teamEdit=false,lineupDraft=null;
+const ownedOf=t=>groupsOf(t).filter(p=>S.owned[p.id]);
+function dexTabs(active){return `<div class="seg" role="tablist"><a role="tab" href="#dex" aria-selected="${active==='dex'}">선수 도감</a><a role="tab" href="#team" aria-selected="${active==='team'}">우리 팀</a></div>`}
+function renderTeam(){
+  const L=S.lineup,bats=ownedOf('bat'),pits=ownedOf('ball'),name=id=>{const p=findPlayer(id);return p?p.name:''};
+  const rows=L.order.map((s,i)=>`<div class="led-row"><span class="led-n">${i+1}</span><span class="led-name">${s.id?esc(name(s.id)):'<i>—</i>'}</span><span class="led-pos">${s.id&&s.pos?posName(s.pos):''}</span></div>`).join('');
+  const bullpen=pits.filter(p=>p.id!==L.sp);
+  $('#view').innerHTML=`<div class="wrap page">
+    <h1 class="title">선수단</h1>${dexTabs('team')}
+    <section class="led" aria-label="라인업 전광판">
+      <div class="led-head"><span>${esc(S.team)}</span><span>TODAY'S LINEUP</span></div>
+      ${rows}
+      <div class="led-row sp"><span class="led-n">SP</span><span class="led-name">${L.sp?esc(name(L.sp)):'<i>—</i>'}</span><span class="led-pos">선발투수</span></div>
+    </section>
+    <section class="card field-card">${fieldSvg(bullpen)}</section>
+    ${bats.length+pits.length===0?`<p class="notice" style="margin:0">아직 영입한 선수가 없어요</p>`:''}
+    ${teamEdit?lineupEditor(bats,pits):`<button class="btn primary block" onclick="teamEdit=true;lineupDraft=JSON.parse(JSON.stringify(S.lineup));renderTeam()" ${bats.length+pits.length?'':'disabled'}>라인업 짜기</button>`}
+    <p class="muted" style="margin:0">보유 타자 ${bats.length}명 · 보유 투수 ${pits.length}명</p>
+  </div>`;
+}
+function fieldSvg(bullpen){const L=S.lineup,byPos={};L.order.forEach(s=>{if(s.id&&s.pos&&FIELD_XY[s.pos])byPos[s.pos]=findPlayer(s.id)});
+  const dh=L.order.find(s=>s.id&&s.pos==='DH'),sp=L.sp&&findPlayer(L.sp);
+  const tag=(x,y,label,pos)=>{const w=Math.max(44,label.length*12+14);return `<g><rect x="${x-w/2}" y="${y-11}" width="${w}" height="22" rx="11" class="tag ${label?'':'empty'}"/><text x="${x}" y="${y+4.5}" class="tagt">${label?esc(label):pos}</text></g>`};
+  const bp=bullpen.slice(0,8),more=bullpen.length-bp.length;
+  return `<svg viewBox="0 0 480 310" role="img" aria-label="야구장 수비 배치와 불펜">
+    <defs><clipPath id="fc"><path d="M180 296 L8 124 A240 240 0 0 1 352 124 Z"/></clipPath></defs>
+    <path d="M180 296 L8 124 A240 240 0 0 1 352 124 Z" class="grass"/>
+    <g clip-path="url(#fc)">${[...Array(7)].map((_,i)=>`<path d="M180 296 L${-40+i*70} 20" class="stripe"/>`).join('')}</g>
+    <path d="M180 296 L8 124 A240 240 0 0 1 352 124 Z" class="fence"/>
+    <path d="M180 286 L244 222 L180 158 L116 222 Z" class="dirt"/>
+    <path d="M180 270 L232 218 L180 170 L128 218 Z" class="infield"/>
+    <circle cx="180" cy="222" r="11" class="dirt"/><rect x="176" y="220" width="8" height="3" class="base"/>
+    ${[[244,222],[180,158],[116,222]].map(([x,y])=>`<rect x="${x-5}" y="${y-5}" width="10" height="10" transform="rotate(45 ${x} ${y})" class="base"/>`).join('')}
+    <path d="M175 288 h10 v4 l-5 4 l-5 -4z" class="base"/>
+    ${Object.entries(FIELD_XY).map(([pos,[x,y]])=>tag(x,y,byPos[pos]?byPos[pos].name:'',posName(pos))).join('')}
+    ${tag(180,222,sp?sp.name:'','투수')}
+    ${dh&&findPlayer(dh.id)?`<text x="22" y="292" class="dh">DH ${esc(findPlayer(dh.id).name)}</text>`:''}
+    <g class="pen"><rect x="372" y="20" width="100" height="276" rx="10" class="penbox"/>
+      <text x="422" y="40" class="pent">불펜</text>
+      <circle cx="400" cy="62" r="9" class="dirt"/><circle cx="444" cy="62" r="9" class="dirt"/>
+      ${bp.map((p,i)=>{const y=92+i*26;return `<g><circle cx="388" cy="${y}" r="8" class="penball"/><text x="402" y="${y+4.5}" class="penn">${esc(p.name)}</text></g>`}).join('')}
+      ${bullpen.length?'':'<text x="422" y="110" class="penn empty" text-anchor="middle">비어 있음</text>'}
+      ${more>0?`<text x="422" y="${92+8*26}" class="penn" text-anchor="middle">+${more}명</text>`:''}</g>
+  </svg>`}
+function lineupEditor(bats,pits){const D=lineupDraft,used=new Set(D.order.map(s=>s.id).filter(Boolean));
+  const optP=(sel)=>`<option value="">— 비움 —</option>`+bats.map(p=>`<option value="${p.id}" ${p.id===sel?'selected':''}>${esc(p.name)}</option>`).join('');
+  const optPos=(sel)=>`<option value="">수비 위치</option>`+POS.map(([c,n])=>`<option value="${c}" ${c===sel?'selected':''}>${n}</option>`).join('');
+  return `<section class="card" style="display:grid;gap:8px"><div class="head" style="margin:0"><h2>라인업 짜기</h2><span class="muted">보유 타자 ${bats.length}명</span></div>
+    ${D.order.map((s,i)=>`<div class="lurow"><span class="led-n">${i+1}</span><select id="lu-p-${i}" onchange="setLu(${i},'id',this.value)" aria-label="${i+1}번 타자">${optP(s.id)}</select><select id="lu-pos-${i}" onchange="setLu(${i},'pos',this.value)" aria-label="${i+1}번 수비 위치">${optPos(s.pos)}</select></div>`).join('')}
+    <div class="lurow"><span class="led-n">SP</span><select id="lu-sp" onchange="lineupDraft.sp=this.value||null" style="grid-column:2/-1" aria-label="선발투수"><option value="">— 선발투수 비움 —</option>${pits.map(p=>`<option value="${p.id}" ${p.id===D.sp?'selected':''}>${esc(p.name)}</option>`).join('')}</select></div>
+    <p class="warn" id="luWarn" hidden></p>
+    <div class="row"><button class="btn" style="flex:1" onclick="teamEdit=false;lineupDraft=null;renderTeam()">취소</button><button class="btn primary" style="flex:2" onclick="saveLineup()">라인업 저장</button></div></section>`}
+function setLu(i,k,v){lineupDraft.order[i][k]=v||null;if(k==='id'&&!v)lineupDraft.order[i].pos=null}
+function saveLineup(){const D=lineupDraft,ids=D.order.map(s=>s.id).filter(Boolean),pos=D.order.filter(s=>s.id).map(s=>s.pos).filter(Boolean),w=$('#luWarn');
+  const dupId=ids.find((x,i)=>ids.indexOf(x)!==i),dupPos=pos.find((x,i)=>pos.indexOf(x)!==i);
+  if(dupId){w.textContent=`${findPlayer(dupId).name} 선수가 두 번 들어갔어요.`;w.hidden=false;return}
+  if(dupPos){w.textContent=`${posName(dupPos)} 자리에 두 명이 있어요.`;w.hidden=false;return}
+  if(D.order.some(s=>s.id&&!s.pos)){w.textContent='수비 위치를 정하지 않은 타자가 있어요.';w.hidden=false;return}
+  S.lineup=D;persist();teamEdit=false;lineupDraft=null;toast('라인업을 저장했어요');renderTeam()}
+
+/* ---------- rule settings ---------- */
+function renderRules(){
+  const r=S.rule,n=S.exercises.length;
+  $('#view').innerHTML=`<div class="wrap page">${subHead('승리 기준 설정')}
+    <section class="card" style="display:grid;gap:12px">
+      <label class="fld">종목 '만족' 기준 (일일 목표의 몇 % 이상)<input type="number" id="r-pct" min="1" max="100" value="${r.satisfyPct}"></label>
+      <label class="fld">승리 기준 (${n}이닝 중 몇 이닝 이상 만족)<input type="number" id="r-need" min="1" max="${n}" value="${r.winNeed}"></label>
+    </section>
+    <button class="btn primary block own-save" onclick="saveRules()">저장</button></div>`;
+}
+function saveRules(){const n=S.exercises.length,c=(v,lo,hi)=>Math.min(hi,Math.max(lo,Math.round(Number(v)||lo)));
+  S.rule={satisfyPct:c($('#r-pct').value,1,100),winNeed:c($('#r-need').value,1,n)};
+  persist();cur.draft=null;toast('승리 기준을 저장했어요');renderRules();return true}
+
+/* ---------- theme (three colors → full token set) ---------- */
+const THEME_TOKENS=['--bg','--surface','--sunk','--ink','--muted','--line','--red','--red-ink','--red-soft','--loss','--loss-soft','--rain','--rain-soft','--board','--board-2','--board-ink','--board-muted','--board-line'];
+const hex2rgb=h=>{h=h.replace('#','');if(h.length===3)h=h.split('').map(c=>c+c).join('');const n=parseInt(h,16);return[n>>16&255,n>>8&255,n&255]};
+const rgb2hex=a=>'#'+a.map(v=>Math.round(Math.max(0,Math.min(255,v))).toString(16).padStart(2,'0')).join('');
+const mix=(a,b,t)=>{const x=hex2rgb(a),y=hex2rgb(b);return rgb2hex(x.map((v,i)=>v+(y[i]-v)*t))};
+const lum=h=>{const c=hex2rgb(h).map(v=>{v/=255;return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4)});return .2126*c[0]+.7152*c[1]+.0722*c[2]};
+const contrast=(a,b)=>{const x=lum(a),y=lum(b);return(Math.max(x,y)+.05)/(Math.min(x,y)+.05)};
+const validHex=h=>/^#[0-9a-f]{6}$/i.test(h||'');
+function applyTheme(t){const r=document.documentElement;
+  if(!t||!validHex(t.bg)||!validHex(t.fg)||!validHex(t.accent)){THEME_TOKENS.forEach(k=>r.style.removeProperty(k));r.style.removeProperty('color-scheme');return}
+  const{bg,fg,accent}=t,dark=lum(bg)<.35;
+  const surface=dark?mix(bg,fg,.07):bg,page=dark?bg:mix(bg,fg,.045);
+  const board=dark?mix(bg,fg,.02):fg,boardInk=dark?fg:bg,rain=dark?'#5e9fe6':'#2c6db0';
+  const v={'--bg':page,'--surface':surface,'--sunk':mix(surface,fg,.07),'--ink':fg,'--muted':mix(fg,bg,.42),'--line':mix(surface,fg,.14),
+    '--red':accent,'--red-ink':contrast(accent,'#ffffff')>=contrast(accent,'#000000')?'#ffffff':'#000000','--red-soft':mix(page,accent,.16),
+    '--loss':mix(fg,bg,.45),'--loss-soft':mix(surface,fg,.08),'--rain':rain,'--rain-soft':mix(page,rain,.16),
+    '--board':board,'--board-2':mix(board,accent,.32),'--board-ink':boardInk,'--board-muted':mix(boardInk,board,.38),'--board-line':mix(board,boardInk,.18)};
+  Object.entries(v).forEach(([k,x])=>r.style.setProperty(k,x));r.style.setProperty('color-scheme',dark?'dark':'light')}
+
+/* ---------- D-day to next season ---------- */
+function ddayInfo(dateStr){if(!dateStr)return null;const n=Math.round((parse(dateStr)-parse(todayStr()))/864e5);
+  return{n,label:n>0?`D-${String(n).padStart(3,'0')}`:n===0?'D-DAY':`D+${String(-n).padStart(3,'0')}`}}
+function ddayHtml(dateStr=S.nextSeason){const d=ddayInfo(dateStr);if(!d)return '';
+  return `<div class="dday" aria-label="시즌 개막까지 ${d.n>0?d.n+'일':d.label}"><small>${d.n>0?'개막까지':'시즌 개막'}</small><b>${d.label}</b></div>`}
+function parseYmd8(v){v=String(v||'').replace(/\D/g,'');if(v.length!==8)return null;const y=+v.slice(0,4),m=+v.slice(4,6),d=+v.slice(6,8);
+  const dt=new Date(y,m-1,d);if(dt.getFullYear()!==y||dt.getMonth()!==m-1||dt.getDate()!==d)return null;return ymd(dt)}
+function ddayPreview(v){const el=$('#ddayPrev');if(!el)return;if(!v){el.textContent='';return}
+  const d=parseYmd8(v);el.textContent=d?`${fmtMD(d).replace(/^/,parse(d).getFullYear()+'년 ')} · 홈 화면에 ${ddayInfo(d).label}로 보여요`:'날짜를 20270328처럼 8자리로 입력해 주세요'}
+
+/* ---------- home hero (slogan + player intro + scoreboard) ---------- */
+const PERSON_SVG='<svg class="avatar" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="60" r="31" fill="#ffcc4d" stroke="#e2a12b" stroke-width="2"/><path d="M19 52 C19 24 81 24 81 52 Z" fill="#c8102e"/><path d="M50 27 L50 52" stroke="#9e0c24" stroke-width="1.5" opacity=".6"/><circle cx="50" cy="26" r="3.2" fill="#9e0c24"/><rect x="41" y="33" width="18" height="4.5" rx="1" fill="#fff"/><rect x="47.75" y="33" width="4.5" height="15" rx="1" fill="#fff"/><path d="M13 54 Q50 43 87 54 Q50 61 13 54 Z" fill="#9e0c24"/><rect x="27" y="59" width="20" height="12" rx="5" fill="#141414"/><rect x="53" y="59" width="20" height="12" rx="5" fill="#141414"/><path d="M47 63 Q50 61 53 63" stroke="#141414" stroke-width="2.5" fill="none"/><path d="M27 62 L21 60 M73 62 L79 60" stroke="#141414" stroke-width="2.5" stroke-linecap="round"/><path d="M31 62 L36 62 M57 62 L62 62" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".7"/><path d="M40 79 Q50 86 60 79" stroke="#7a4a12" stroke-width="3" fill="none" stroke-linecap="round"/></svg>';
+function heroHtml(h,editable=true){
+  const T=todayStr(),season=tally(S.season.start,T),week=tally(weekStart(T),T),p=h.profile||{};
+  const has=p.nick||p.from||p.age||p.etc||p.photo;
+  const age=p.age&&/^\d+$/.test(String(p.age).trim())?`${String(p.age).trim()}세`:p.age;
+  const meta=[p.from?`<span>출신<b>${esc(p.from)}</b></span>`:'',age?`<span>나이<b>${esc(age)}</b></span>`:''].join('');
+  return `<header class="board"><div class="wrap">
+    <div class="brand"><svg class="ball" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M7 5.5c2 2.2 2 10.8 0 13M17 5.5c-2 2.2-2 10.8 0 13" stroke-dasharray="1.6 1.6"/></svg>나만의 스프링캠프${editable?'<a class="edit" href="#look">꾸미기</a>':''}</div>
+    <div class="slogan-row"><div class="slogan">${esc(h.slogan||'최강기아 승리하리라')}</div>${ddayHtml('nextSeason' in h?h.nextSeason:S.nextSeason)||(editable?'<a class="dday empty" href="#more"><small>개막일</small><b>설정</b></a>':'')}</div>
+    ${has?`<${editable?'a href="#look"':'div'} class="profile"><div class="pphoto">${p.photo?`<img src="${p.photo}" alt="내 사진">`:PERSON_SVG}</div>
+      <div class="pinfo"><div class="pnick"><small>감독 소개</small>${esc(p.nick||'닉네임')}</div>${meta?`<div class="pmeta">${meta}</div>`:''}${p.etc?`<div class="petc">${esc(p.etc)}</div>`:''}</div></${editable?'a':'div'}>`
+      :(editable?`<a href="#look" class="profile"><div class="pphoto">${PERSON_SVG}</div><div class="pempty">감독 소개 만들기 ›</div></a>`:'')}
+    <div class="score">
+      <div><span class="lbl">시즌 성적</span><b>${season.W}승 ${season.L}패</b><small>우취 ${season.R}</small></div>
+      <div><span class="lbl">승률</span><b class="mono">${fmtPct(season.pct)}</b><span class="pctbar"></span></div>
+      <div><span class="lbl">이번 주</span><b>${week.W}승 ${week.L}패</b><small>승률 ${fmtPct(week.pct)}</small></div>
+    </div>
+  </div></header>`;
+}
+
+/* ---------- fonts (Korean Google Fonts, loaded only when used) ---------- */
+const FONTS={
+  display:[
+    {id:'blackhan',name:'블랙한산스',family:'Black Han Sans',q:'Black+Han+Sans'},
+    {id:'dohyeon',name:'도현',family:'Do Hyeon',q:'Do+Hyeon'},
+    {id:'jua',name:'주아',family:'Jua',q:'Jua'},
+    {id:'gugi',name:'구기',family:'Gugi',q:'Gugi'},
+    {id:'sunflower',name:'해바라기',family:'Sunflower',q:'Sunflower:wght@700'},
+    {id:'yeonsung',name:'연성',family:'Yeon Sung',q:'Yeon+Sung'},
+    {id:'dokdo',name:'동해독도',family:'East Sea Dokdo',q:'East+Sea+Dokdo'},
+    {id:'pen',name:'나눔손글씨 펜',family:'Nanum Pen Script',q:'Nanum+Pen+Script'},
+    {id:'songmyung',name:'송명',family:'Song Myung',q:'Song+Myung'},
+    {id:'myeongjo',name:'나눔명조 굵게',family:'Nanum Myeongjo',q:'Nanum+Myeongjo:wght@800'}],
+  body:[
+    {id:'noto',name:'본고딕',family:'Noto Sans KR',q:'Noto+Sans+KR:wght@400;500;700'},
+    {id:'nanumgothic',name:'나눔고딕',family:'Nanum Gothic',q:'Nanum+Gothic:wght@400;700;800'},
+    {id:'gowun',name:'고운돋움',family:'Gowun Dodum',q:'Gowun+Dodum'},
+    {id:'plex',name:'IBM 플렉스',family:'IBM Plex Sans KR',q:'IBM+Plex+Sans+KR:wght@400;500;700'},
+    {id:'gothica1',name:'고딕 A1',family:'Gothic A1',q:'Gothic+A1:wght@400;500;700'},
+    {id:'gaegu',name:'개구',family:'Gaegu',q:'Gaegu:wght@400;700'},
+    {id:'myeongjo',name:'나눔명조',family:'Nanum Myeongjo',q:'Nanum+Myeongjo:wght@400;700'}]};
+/* user's own font file (ttf/otf/woff) kept in IndexedDB, not in the backup code */
+const CUSTOM_FAMILY='SpringcampCustom';
+function idb(){return new Promise((res,rej)=>{try{const r=indexedDB.open('springcamp',1);r.onupgradeneeded=()=>r.result.createObjectStore('files');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}catch(e){rej(e)}})}
+async function idbReq(mode,fn){const db=await idb();return new Promise((res,rej)=>{const tx=db.transaction('files',mode),req=fn(tx.objectStore('files'));tx.oncomplete=()=>res(req&&req.result);tx.onerror=()=>rej(tx.error)})}
+const idbGet=k=>idbReq('readonly',st=>st.get(k)),idbSet=(k,v)=>idbReq('readwrite',st=>st.put(v,k)),idbDel=k=>idbReq('readwrite',st=>st.delete(k));
+function dropCustomFace(){try{const old=[];document.fonts.forEach(f=>{if(f.family.replace(/["']/g,'')===CUSTOM_FAMILY)old.push(f)});old.forEach(f=>document.fonts.delete(f))}catch(e){}}
+async function installCustomFont(buf){const ff=new FontFace(CUSTOM_FAMILY,buf);await ff.load();dropCustomFace();document.fonts.add(ff)}
+async function bootCustomFont(){if(!S.customFont)return;try{const v=await idbGet('customFont');if(v&&v.buf){await installCustomFont(v.buf.slice(0));if(location.hash==='#look')renderLook()}}catch(e){}}
+async function pickCustomFont(input){const f=input.files&&input.files[0];if(!f)return;
+  if(f.size>25*1024*1024){toast('글씨체 파일이 너무 커요. 25MB 이하 파일을 골라 주세요');return}
+  toast('글씨체를 불러오는 중이에요…');
+  try{const buf=await f.arrayBuffer();await installCustomFont(buf.slice(0));await idbSet('customFont',{name:f.name,buf});
+    S.customFont={name:f.name.replace(/\.(ttf|otf|woff2?)$/i,'')};persist();
+    lookDraft.fonts={display:'custom',body:'custom'};renderLook();toast('내 글씨체를 적용했어요. 아래 저장을 눌러 주세요')}
+  catch(e){toast('이 파일은 글씨체로 읽을 수 없어요. ttf, otf, woff 파일인지 확인해 주세요')}}
+async function removeCustomFont(){try{await idbDel('customFont')}catch(e){}dropCustomFace();S.customFont=null;
+  ['display','body'].forEach(k=>{if(S.fonts[k]==='custom')S.fonts[k]=FONTS[k][0].id;if(lookDraft&&lookDraft.fonts[k]==='custom')lookDraft.fonts[k]=FONTS[k][0].id});
+  persist();applyFonts(lookDraft?lookDraft.fonts:S.fonts);renderLook();toast('내 글씨체를 지웠어요')}
+const fontList=kind=>S.customFont?[{id:'custom',name:'내 글씨체 · '+S.customFont.name,family:CUSTOM_FAMILY,q:null},...FONTS[kind]]:FONTS[kind];
+const fontLoaded=new Set(['Black+Han+Sans','Noto+Sans+KR:wght@400;500;700']);
+function loadFont(q){if(!q||fontLoaded.has(q))return;fontLoaded.add(q);const l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family='+q+'&display=swap';document.head.appendChild(l)}
+const fontOf=(kind,id)=>fontList(kind).find(f=>f.id===id)||FONTS[kind][0];
+function applyFonts(f){f=f||{};const r=document.documentElement,dsp=fontOf('display',f.display),bdy=fontOf('body',f.body);
+  loadFont(dsp.q);loadFont(bdy.q);
+  r.style.setProperty('--display',`'${dsp.family}','Noto Sans KR',system-ui,sans-serif`);
+  r.style.setProperty('--body',`'${bdy.family}',system-ui,-apple-system,'Apple SD Gothic Neo',sans-serif`)}
+function fontOptsHtml(kind,sel){const sample=kind==='display'?'최강기아 .615':'오늘 6/9 이닝 만족';
+  return `<div class="fontopts">${fontList(kind).map(f=>`<button class="fontopt" aria-pressed="${f.id===sel}" onclick="setFont('${kind}','${f.id}')"><span class="sample" style="font-family:'${f.family}',sans-serif${kind==='display'?'':';font-size:15px'}">${sample}</span><small>${f.name}</small></button>`).join('')}</div>`}
+function setFont(kind,id){lookDraft.fonts[kind]=id;renderLook()}
+
+/* ---------- look settings (home text, player intro, colors) ---------- */
+const SWATCHES=[['빨강','#c8102e'],['검정','#121212'],['흰색','#ffffff'],['남색','#10233f'],['노랑','#f4bd35'],['회색','#8a8f99']];
+const PRESETS=[
+  {name:'빨강·검정·흰색',t:{bg:'#121212',fg:'#ffffff',accent:'#c8102e'}},
+  {name:'흰 바탕',t:{bg:'#ffffff',fg:'#121212',accent:'#c8102e'}},
+  {name:'남색 유니폼',t:{bg:'#10233f',fg:'#ffffff',accent:'#e8324c'}},
+  {name:'원정 유니폼',t:{bg:'#f3f1ec',fg:'#10233f',accent:'#c8102e'}}];
+const ROLES=[['bg','배경색'],['fg','글자색'],['accent','포인트색']];
+let lookDraft=null;
+function renderLook(){
+  if(!lookDraft)lookDraft={slogan:S.home.slogan,profile:{...S.home.profile},theme:{...S.theme},fonts:{...S.fonts},nextSeason:S.nextSeason};
+  const L=lookDraft,p=L.profile;
+  $('#view').innerHTML=`<div class="wrap page">${subHead('홈 화면 꾸미기')}
+    <div class="preview-frame" id="lookPreview">${heroHtml(L,false)}</div>
+    <section class="card" style="display:grid;gap:10px"><h2>응원 문구</h2>
+      <input type="text" id="lk-slogan" maxlength="30" value="${esc(L.slogan)}" placeholder="최강기아 승리하리라" oninput="lookDraft.slogan=this.value;lookRefresh()"></section>
+    <section class="card" style="display:grid;gap:12px"><h2>감독 소개</h2>
+      <div class="photo-edit"><div class="pphoto">${p.photo?`<img src="${p.photo}" alt="내 사진">`:PERSON_SVG}</div>
+        <div class="row"><label class="filebtn" for="lk-photo">${p.photo?'사진 바꾸기':'사진 선택'}</label><input type="file" id="lk-photo" accept="image/*" onchange="pickProfilePhoto(this)">${p.photo?'<button class="btn ghost" style="padding:7px 10px" onclick="lookDraft.profile.photo=\'\';renderLook()">삭제</button>':''}</div></div>
+      <label class="fld">닉네임<input type="text" id="lk-nick" maxlength="20" value="${esc(p.nick)}" placeholder="예: 광주 불주먹" oninput="lookDraft.profile.nick=this.value;lookRefresh()"></label>
+      <div class="grid2"><label class="fld">출신 지역<input type="text" id="lk-from" maxlength="20" value="${esc(p.from)}" placeholder="예: 광주" oninput="lookDraft.profile.from=this.value;lookRefresh()"></label>
+        <label class="fld">나이<input type="text" id="lk-age" maxlength="10" inputmode="numeric" value="${esc(p.age)}" placeholder="예: 34" oninput="lookDraft.profile.age=this.value;lookRefresh()"></label></div>
+      <label class="fld">기타 사항<textarea id="lk-etc" maxlength="120" style="font-family:var(--body);font-size:14px;min-height:70px" placeholder="예: 165cm · 58kg · 우투우타 · 목표 체중 55kg" oninput="lookDraft.profile.etc=this.value;lookRefresh()">${esc(p.etc)}</textarea></label>
+    </section>
+    <section class="card"><div class="head"><h2>색상</h2></div>
+      <div class="presets" style="margin-bottom:14px">${PRESETS.map((x,i)=>`<button class="preset" onclick="applyPreset(${i})"><i><b style="background:${x.t.bg}"></b><b style="background:${x.t.fg}"></b><b style="background:${x.t.accent}"></b></i>${x.name}</button>`).join('')}</div>
+      ${ROLES.map(([k,label])=>`<div class="swrow"><div class="lbl">${label}<span class="muted mono">${L.theme[k].toUpperCase()}</span></div>
+        <div class="swatches">${SWATCHES.map(([n,c])=>`<button class="sw" style="background:${c}" aria-label="${label} ${n}" aria-pressed="${L.theme[k].toLowerCase()===c}" onclick="setColor('${k}','${c}')"></button>`).join('')}
+        <input type="color" id="lk-${k}" value="${L.theme[k]}" aria-label="${label} 직접 고르기" oninput="setColor('${k}',this.value,true)"></div></div>`).join('')}
+      <p class="warn" id="lookWarn" ${contrast(L.theme.bg,L.theme.fg)<4.5?'':'hidden'}>배경색과 글자색이 비슷해서 글자가 잘 안 보일 수 있어요.</p>
+    </section>
+    <section class="card" style="display:grid;gap:10px"><h2>글씨체</h2>
+      <div class="customfont"><div style="min-width:0"><b>내 글씨체 파일</b><br><span class="muted">${S.customFont?esc(S.customFont.name)+' 불러옴':'ttf · otf · woff'}</span></div>
+        <div class="row" style="flex:none"><label class="filebtn" for="lk-font">${S.customFont?'바꾸기':'파일 선택'}</label><input type="file" id="lk-font" onchange="pickCustomFont(this)">${S.customFont?'<button class="btn ghost" style="padding:7px 10px" onclick="removeCustomFont()">삭제</button>':''}</div></div>
+      <p class="muted" style="margin:0">제목·숫자</p>
+      ${fontOptsHtml('display',L.fonts.display)}
+      <p class="muted" style="margin:6px 0 0">본문</p>
+      ${fontOptsHtml('body',L.fonts.body)}
+    </section>
+    <div class="row own-save"><button class="btn" style="flex:1" onclick="lookDraft=null;applyTheme(S.theme);applyFonts(S.fonts);renderLook()">되돌리기</button><button class="btn primary" style="flex:2" onclick="saveLook()">저장</button></div>
+  </div>`;
+  applyTheme(L.theme);applyFonts(L.fonts);[...FONTS.display,...FONTS.body].forEach(f=>loadFont(f.q));
+}
+function lookRefresh(){$('#lookPreview').innerHTML=heroHtml(lookDraft,false)}
+function setColor(k,c,fromPicker){lookDraft.theme[k]=c.toLowerCase();if(fromPicker){applyTheme(lookDraft.theme);lookRefresh();const w=$('#lookWarn');if(w)w.hidden=contrast(lookDraft.theme.bg,lookDraft.theme.fg)>=4.5}else renderLook()}
+function applyPreset(i){lookDraft.theme={...PRESETS[i].t};renderLook()}
+function pickProfilePhoto(input){const f=input.files&&input.files[0];if(!f)return;
+  const fr=new FileReader();fr.onload=()=>{const img=new Image();img.onload=()=>{const s=240,c=document.createElement('canvas');c.width=c.height=s;
+    const k=Math.max(s/img.width,s/img.height),w=img.width*k,h=img.height*k;c.getContext('2d').drawImage(img,(s-w)/2,(s-h)/2,w,h);
+    lookDraft.profile.photo=c.toDataURL('image/jpeg',.85);renderLook()};img.onerror=()=>toast('이 파일은 이미지로 열 수 없어요');img.src=fr.result};fr.readAsDataURL(f)}
+function saveLook(){const L=lookDraft;
+  S.home={slogan:(L.slogan||'').trim()||'최강기아 승리하리라',profile:{...L.profile,nick:(L.profile.nick||'').trim(),from:(L.profile.from||'').trim(),age:(L.profile.age||'').trim(),etc:(L.profile.etc||'').trim()}};S.theme={...L.theme};S.fonts={...L.fonts};
+  if(persist()){lookDraft=null;toast('홈 화면을 저장했어요');renderLook();return true}return false}
+
+/* ---------- first-run tutorial ---------- */
+/* Texts for the first two screens: replace freely. Line breaks in body become new lines. */
+const TUTORIAL={
+  why:{eyebrow:'OFF SEASON',title:'야구 없는 겨울,\n심심하신가요?',body:'노노! 지금은 응원 체력을 기를 때예요.\n매일 운동으로 나와의 경기에서 이기고, 승률을 쌓고, 선수를 영입해 최고의 라인업을 만드세요.\n다음 시즌엔 챔필 무한계단도 끄떡없을 거예요!'},
+  rules:{eyebrow:'HOW TO WIN',title:'하루는 한 경기',body:'운동 종류와 목표량을 정하고, 목표를 채우면 승리!\n이길수록 승률이 오르고 선수 영입 스티커가 쌓여요.\n스티커가 많을수록 더 좋은 선수를 데려올 수 있어요.\n개막일까지 나만의 라인업과 불펜을 완성해서 우승을 노려 보세요!'}};
+const TOUR_STEPS=[
+  {route:'look',name:'홈 화면',save:()=>saveLook()},
+  {route:'exercises',name:'운동 목표',save:()=>saveEx()},
+  {route:'rules',name:'승리 기준',save:()=>saveRules()},
+  {route:'rewards',name:'보상',save:()=>saveRewards()},
+  {route:'players',name:'선수',save:()=>saveRewards()}];
+let tour=null;
+const nl2br=t=>esc(t).replace(/\n/g,'<br>');
+function startTour(){tour={step:-2};renderTour()}
+function tourStepHtml(){return `<div class="tourstep"><span>처음 설정 ${tour.step+1}/${TOUR_STEPS.length} · ${TOUR_STEPS[tour.step].name}</span><i>${TOUR_STEPS.map((_,i)=>`<b class="${i<=tour.step?'on':''}"></b>`).join('')}</i></div>`}
+function introHtml(step){const T=step===-2?TUTORIAL.why:TUTORIAL.rules,dots=[-2,-1,0].map(i=>`<b class="${i===step?'on':''}"></b>`).join('');
+  const demo=step===-1?`<div class="tdemo"><div class="linescore">${['ok','ok','ok','part','ok','ok','k','ok','ok'].map((c,i)=>`<span class="ls ${c}"><small>${i+1}</small><b>${c==='ok'?'●':c==='k'?'아웃':'62'}</b></span>`).join('')}</div>
+    <p><span class="res W">승</span> 9이닝 중 7이닝 만족 · 아웃 1</p></div>`:`<svg class="tball" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="12" cy="12" r="9"/><path d="M7 5.5c2 2.2 2 10.8 0 13M17 5.5c-2 2.2-2 10.8 0 13" stroke-dasharray="1.6 1.6"/></svg>`;
+  return `<div class="tin"><button class="tskip" onclick="skipTour()">건너뛰기</button>
+    <div class="tbody"><small class="teyebrow">${esc(T.eyebrow)}</small><h1 class="ttitle">${nl2br(T.title)}</h1>${demo}<p class="ttext">${nl2br(T.body)}</p></div>
+    <div class="tfoot"><i class="tdots">${dots}</i><div class="row">${step===-1?'<button class="btn tback" onclick="tourGo(-2)">이전</button>':''}<button class="btn primary tnext" onclick="tourGo(${step+1})">${step===-1?'내 팀 설정 시작':'다음'}</button></div></div></div>`}
+function renderTour(){const el=$('#tour'),bar=$('#tourbar');document.body.classList.toggle('touring',!!tour);
+  if(!tour){el.hidden=true;el.innerHTML='';bar.hidden=true;bar.innerHTML='';return}
+  if(tour.step<0){bar.hidden=true;el.innerHTML=introHtml(tour.step);el.hidden=false;el.scrollTop=0;return}
+  el.hidden=true;el.innerHTML='';const last=tour.step===TOUR_STEPS.length-1;bar.hidden=false;
+  bar.innerHTML=`<div class="in"><button class="btn" onclick="tourGo(${tour.step-1})">‹ 이전</button><button class="btn ghost" onclick="tourGo(${tour.step+1})">${last?'건너뛰고 시작':'건너뛰기'}</button><button class="btn primary" onclick="tourNext()">${last?'저장하고 시작':'저장하고 다음'}</button></div>`;
+  const r=TOUR_STEPS[tour.step].route;if(location.hash!=='#'+r)location.hash=r;else route()}
+function tourGo(i){if(!tour)return;if(i>=TOUR_STEPS.length){finishTour();return}tour.step=Math.max(-2,i);renderTour()}
+function tourNext(){const ok=TOUR_STEPS[tour.step].save();if(ok===false)return;tourGo(tour.step+1)}
+function finishTour(skipped){S.onboarded=true;persist();tour=null;renderTour();if(location.hash==='#home'||!location.hash)route();else location.hash='home';
+  toast(skipped?'설정은 언제든 설정 탭에서 바꿀 수 있어요':'설정을 마쳤어요. 오늘 첫 경기를 시작해 볼까요?')}
+function skipTour(){finishTour(true)}
+
+/* ---------- routing ---------- */
+const ROUTES={players:()=>renderRewards('players'),home:renderHome,dex:renderDex,team:renderTeam,look:renderLook,record:renderRecord,week:renderWeek,more:renderMore,exercises:renderExercises,rewards:()=>renderRewards('rewards'),rules:renderRules};
+const TAB_OF={players:'more',team:'dex',look:'more',exercises:'more',rewards:'more',rules:'more'};
+let lastRoute='';
+function route(){const h=(location.hash||'#home').slice(1),r=ROUTES[h]?h:'home';
+  if(r!=='exercises')exDraft=null;if(r!=='team'){teamEdit=false;lineupDraft=null}closeSheet();if(r!=='rewards'&&r!=='players')rwDraft=null;else if(lastRoute&&lastRoute!==r)rwDraft=null;if(r!=='look'&&lookDraft){lookDraft=null;applyTheme(S.theme);applyFonts(S.fonts)}
+  if(r==='record'&&lastRoute!=='record'&&!cur.draft)cur.date=cur.date||todayStr();
+  ROUTES[r]();const tab=TAB_OF[r]||r;
+  document.querySelectorAll('.tabbar a').forEach(a=>a.classList.toggle('on',a.dataset.tab===tab));
+  if(r!==lastRoute)window.scrollTo(0,0);lastRoute=r}
+document.querySelector('.tabbar a[data-tab=record]').addEventListener('click',()=>{if(location.hash!=='#record'){cur.date=todayStr();cur.draft=null}});
+window.addEventListener('hashchange',route);
+backfillStickers();
+applyTheme(S.theme);applyFonts(S.fonts);
+route();
+if(!S.onboarded)startTour();
+bootCustomFont();
+</script>
+
+<script>
+/* PWA: offline support, keep data from being cleared, status bar color follows theme */
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}))}
+try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
+(function(){const orig=applyTheme;window.applyTheme=applyTheme=function(t){orig(t);const m=document.querySelector('meta[name=theme-color]');if(m)m.content=(t&&t.bg)||'#10233f'};applyTheme(S.theme)})();
+</script>
+</body>
+</html>
